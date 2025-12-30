@@ -1,0 +1,37 @@
+{
+  "name": "gmail-bulk-email-sender",
+  "version": "1.0.0",
+  "description": "Node.js script to send personalized bulk emails using Gmail SMTP and Google Sheets",
+  "main": "sendEmails.js",
+  "scripts": {
+    "start": "node sendEmails.js",
+    "server": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "gmail",
+    "bulk-email",
+    "nodemailer",
+    "google-sheets",
+    "email-automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^2.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "es-toolkit": "^1.39.8",
+    "express": "^5.2.1",
+    "fetch-blob": "^4.0.0",
+    "formdata-polyfill": "^4.0.10",
+    "gaxios": "^7.1.3",
+    "google-auth-library": "^10.5.0",
+    "google-spreadsheet": "^5.0.2",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.8"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

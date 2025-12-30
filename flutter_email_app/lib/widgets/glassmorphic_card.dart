@@ -1,0 +1,141 @@
+import 'package:flutter/material.dart';
+import 'dart:ui';
+import '../utils/theme.dart';
+
+class GlassmorphicCard extends StatefulWidget {
+  final Widget child;
+  final double? width;
+  final double? height;
+  final EdgeInsetsGeometry? padding;
+  final double borderRadius;
+  final double blur;
+  final double opacity;
+  final VoidCallback? onTap;
+  final bool animate;
+  
+  const GlassmorphicCard({
+    super.key,
+    required this.child,
+    this.width,
+    this.height,
+    this.padding,
+    this.borderRadius = 20,
+    this.blur = 10,
+    this.opacity = 0.1,
+    this.onTap,
+    this.animate = true,
+  });
+
+  @override
+  State<GlassmorphicCard> createState() => _GlassmorphicCardState();
+}
+
+class _GlassmorphicCardState extends State<GlassmorphicCard> 
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _elevationAnimation;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    
+    _elevationAnimation = Tween<double>(begin: 0.1, end: 0.3).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTapDown: widget.animate ? (_) => _controller.forward() : null,
+        onTapUp: (_) {
+          if (widget.animate) _controller.reverse();
+          widget.onTap?.call();
+        },
+        onTapCancel: widget.animate ? () => _controller.reverse() : null,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: widget.animate ? _scaleAnimation.value : 1.0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                width: widget.width,
+                height: widget.height,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(widget.borderRadius),
+                  border: Border.all(
+                    color: _isHovered 
+                        ? AppTheme.glowBlue.withOpacity(0.5)
+                        : Colors.white.withOpacity(0.2),
+                    width: _isHovered ? 2.0 : 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.glowBlue.withOpacity(
+                        widget.animate ? _elevationAnimation.value : 0.1
+                      ),
+                      blurRadius: _isHovered ? 30 : 20,
+                      offset: Offset(0, _isHovered ? 15 : 10),
+                      spreadRadius: _isHovered ? 2 : 0,
+                    ),
+                    // 3D depth effect
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(widget.borderRadius),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: widget.blur, 
+                      sigmaY: widget.blur,
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(widget.opacity),
+                            Colors.white.withOpacity(widget.opacity * 0.5),
+                            Colors.white.withOpacity(widget.opacity * 0.3),
+                          ],
+                        ),
+                      ),
+                      padding: widget.padding ?? const EdgeInsets.all(20),
+                      child: widget.child,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+README_APP.md
+PROJECT_SUMMARY.md
+QUICK_START.md
+RUN_ON_MAC.md
+FIX_MACOS_SIGNING.md
+flutter_email_app
+Jashank_Fullstack_Developer_Resume.pdf
+.DS_Store
+*.log
+.env.example
