@@ -7,14 +7,25 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (production only)
+RUN npm ci --only=production && npm cache clean --force
 
 # Copy application files
 COPY server.js ./
 COPY sendEmails.js ./
 COPY Job.js ./
-COPY serviceAccount.json ./
+
+# Note: serviceAccount.json should be mounted as a volume or secret in production
+# COPY serviceAccount.json ./
+
+# Create a non-root user for security
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+# Change ownership of app directory
+RUN chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
 
 # Expose port
 EXPOSE 3000

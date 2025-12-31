@@ -19,12 +19,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Helper function to create OTP email transporter (using provided Gmail credentials)
+// Note: OTP functionality disabled - authentication removed from frontend
 function createOtpTransporter() {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'jay440470@gmail.com',
-      pass: 'gwrsxziiwwzartep'
+      user: process.env.OTP_GMAIL_USER || 'jay440470@gmail.com',
+      pass: process.env.OTP_GMAIL_PASSWORD || 'gwrsxziiwwzartep'
     }
   });
 }

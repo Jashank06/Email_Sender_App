@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  email-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: email-sender-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # OTP Email Configuration (optional - for auth endpoints if needed)
+      - OTP_GMAIL_USER=${OTP_GMAIL_USER:-jay440470@gmail.com}
+      - OTP_GMAIL_PASSWORD=${OTP_GMAIL_PASSWORD}
+    volumes:
+      # Mount serviceAccount.json securely (DO NOT COPY into image)
+      - ./serviceAccount.json:/app/serviceAccount.json:ro
+    networks:
+      - email-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  email-network:
+    driver: bridge

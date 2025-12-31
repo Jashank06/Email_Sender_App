@@ -5,7 +5,7 @@
     
     <application
         android:usesCleartextTraffic="true"
-        android:label="Email Sender"
+        android:label="Email Sender Pro"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

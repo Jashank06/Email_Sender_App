@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       
                       // Title
                       Text(
-                        'Email Sender',
+                        'Email Sender Pro',
                         style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           fontSize: 40,
                           foreground: Paint()
