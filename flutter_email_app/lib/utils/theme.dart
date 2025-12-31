@@ -8,6 +8,8 @@ class AppTheme {
   static const Color glassWhite = Color(0x33FFFFFF);
   static const Color glowBlue = Color(0xFF00D4FF);
   static const Color glowPurple = Color(0xFF8B5CF6);
+  static const Color accentPurple = Color(0xFF8B5CF6);
+  static const Color accentBlue = Color(0xFF00D4FF);
   static const Color successGreen = Color(0xFF10B981);
   static const Color errorRed = Color(0xFFEF4444);
 

@@ -148,9 +148,11 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
           const SizedBox(height: 16),
           
           _buildConfigCard(
-            icon: Icons.table_chart_outlined,
-            title: 'Google Sheet',
-            value: 'ID: ${provider.sheetId.substring(0, 20)}...',
+            icon: provider.useManualRecipients ? Icons.paste_rounded : Icons.table_chart_outlined,
+            title: provider.useManualRecipients ? 'Recipients' : 'Google Sheet',
+            value: provider.useManualRecipients 
+                ? '${provider.recipients.length} manual entries'
+                : 'ID: ${provider.sheetId.length > 20 ? provider.sheetId.substring(0, 20) + '...' : provider.sheetId}',
           ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
           
           const SizedBox(height: 16),
@@ -387,7 +389,7 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0);
+    );
   }
   
   Widget _buildDoneButton() {

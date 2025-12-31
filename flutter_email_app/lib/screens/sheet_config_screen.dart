@@ -17,11 +17,63 @@ class SheetConfigScreen extends StatefulWidget {
 class _SheetConfigScreenState extends State<SheetConfigScreen> {
   final _formKey = GlobalKey<FormState>();
   final _sheetIdController = TextEditingController();
+  final _pasteController = TextEditingController();
+  bool _useManual = false;
+  List<Map<String, String>> _parsedContacts = [];
   
   @override
   void dispose() {
     _sheetIdController.dispose();
+    _pasteController.dispose();
     super.dispose();
+  }
+
+  void _parsePastedText(String text) {
+    if (text.trim().isEmpty) {
+      setState(() => _parsedContacts = []);
+      return;
+    }
+
+    final lines = text.split('\n');
+    final List<Map<String, String>> contacts = [];
+    
+    for (var line in lines) {
+      if (line.trim().isEmpty) continue;
+      
+      // Try to split by tab, comma, or space
+      // Logic: If there's a tab, use it. If not, if there's a comma, use it. 
+      // Else try to find the last space which might separate name and email.
+      String name = '';
+      String email = '';
+      
+      if (line.contains('\t')) {
+        final parts = line.split('\t');
+        name = parts[0].trim();
+        email = parts.length > 1 ? parts[1].trim() : '';
+      } else if (line.contains(',')) {
+        final parts = line.split(',');
+        name = parts[0].trim();
+        email = parts.length > 1 ? parts[1].trim() : '';
+      } else {
+        final parts = line.trim().split(RegExp(r'\s+'));
+        if (parts.length >= 2) {
+          email = parts.last;
+          name = parts.sublist(0, parts.length - 1).join(' ');
+        } else if (parts.length == 1) {
+          email = parts[0];
+          name = 'Recipient';
+        }
+      }
+
+      // Basic email validation
+      if (email.contains('@')) {
+        contacts.add({'name': name, 'email': email});
+      }
+      
+      if (contacts.length >= 100) break;
+    }
+    
+    setState(() => _parsedContacts = contacts);
   }
   
   @override
@@ -58,24 +110,32 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Google Sheets Setup',
+                              'Recipient Setup',
                               style: Theme.of(context).textTheme.headlineMedium,
                             ).animate().fadeIn().slideX(begin: -0.2, end: 0),
                             
                             const SizedBox(height: 8),
                             
                             Text(
-                              'Connect your Google Sheet with contacts',
+                              'Choose how to add your contacts',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2, end: 0),
                             
                             const SizedBox(height: 32),
                             
-                            _buildSheetIdInput(),
+                            _buildToggleButtons(),
                             
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 32),
                             
-                            _buildInstructionsCard(),
+                            if (!_useManual) ...[
+                              _buildSheetIdInput(),
+                              const SizedBox(height: 24),
+                              _buildInstructionsCard(),
+                            ] else ...[
+                              _buildManualPasteInput(),
+                              const SizedBox(height: 24),
+                              if (_parsedContacts.isNotEmpty) _buildPreviewCard(),
+                            ],
                             
                             const SizedBox(height: 32),
                             
@@ -96,6 +156,84 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
                 }
                 return const SizedBox.shrink();
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleButtons() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppTheme.glassWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildToggleButton(
+              icon: Icons.table_chart_outlined,
+              label: 'Google Sheets',
+              isSelected: !_useManual,
+              onTap: () => setState(() => _useManual = false),
+            ),
+          ),
+          Expanded(
+            child: _buildToggleButton(
+              icon: Icons.paste_rounded,
+              label: 'Paste List',
+              isSelected: _useManual,
+              onTap: () => setState(() => _useManual = true),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.2, end: 0);
+  }
+
+  Widget _buildToggleButton({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: 300.ms,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: isSelected 
+              ? LinearGradient(colors: [AppTheme.glowBlue, AppTheme.glowPurple])
+              : null,
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: AppTheme.glowBlue.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ] : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? AppTheme.primaryBlack : AppTheme.accentWhite.withOpacity(0.6),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? AppTheme.primaryBlack : AppTheme.accentWhite.withOpacity(0.6),
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -172,7 +310,7 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
             prefixIcon: Icon(Icons.table_chart_outlined, color: AppTheme.glowBlue),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty) {
+            if (!_useManual && (value == null || value.isEmpty)) {
               return 'Please enter Google Sheet ID';
             }
             return null;
@@ -180,6 +318,110 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
         ),
       ],
     ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0);
+  }
+
+  Widget _buildManualPasteInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Paste Recipients',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              '${_parsedContacts.length}/100',
+              style: TextStyle(
+                color: _parsedContacts.length > 100 ? AppTheme.errorRed : AppTheme.accentWhite.withOpacity(0.6),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _pasteController,
+          maxLines: 6,
+          style: const TextStyle(color: AppTheme.accentWhite, fontSize: 14),
+          onChanged: _parsePastedText,
+          decoration: const InputDecoration(
+            hintText: 'Name   Email\nJohn Doe   john@example.com\nJane Smith   jane@example.com',
+            hintStyle: TextStyle(color: Colors.white24),
+            contentPadding: EdgeInsets.all(16),
+          ),
+          validator: (value) {
+            if (_useManual && _parsedContacts.isEmpty) {
+              return 'Please paste at least one valid recipient';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Supported: Excel/Sheets copy-paste, Comma-separated',
+          style: TextStyle(color: AppTheme.accentWhite.withOpacity(0.4), fontSize: 11),
+        ),
+      ],
+    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0);
+  }
+
+  Widget _buildPreviewCard() {
+    return GlassmorphicCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Parsed Preview',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppTheme.glowBlue,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _parsedContacts.length > 3 ? 3 : _parsedContacts.length,
+            separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 16),
+            itemBuilder: (context, index) {
+              final contact = _parsedContacts[index];
+              return Row(
+                children: [
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundColor: AppTheme.glowBlue.withOpacity(0.2),
+                    child: Text(
+                      contact['name']![0].toUpperCase(),
+                      style: const TextStyle(color: AppTheme.glowBlue, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(contact['name']!, style: const TextStyle(color: AppTheme.accentWhite, fontSize: 13)),
+                        Text(contact['email']!, style: TextStyle(color: AppTheme.accentWhite.withOpacity(0.5), fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          if (_parsedContacts.length > 3) ...[
+            const SizedBox(height: 8),
+            Text(
+              '+ ${_parsedContacts.length - 3} more contacts...',
+              style: TextStyle(color: AppTheme.accentWhite.withOpacity(0.4), fontSize: 11, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ],
+      ),
+    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0);
   }
   
   Widget _buildInstructionsCard() {
@@ -212,7 +454,7 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
           _buildInstruction('3', 'Copy the Sheet ID from URL'),
         ],
       ),
-    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0);
+    );
   }
   
   Widget _buildInstruction(String number, String text) {
@@ -309,7 +551,7 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
               children: [
                 const CircularProgressIndicator(color: AppTheme.glowBlue),
                 const SizedBox(height: 16),
-                Text('Testing connection...', style: Theme.of(context).textTheme.bodyLarge),
+                Text(_useManual ? 'Processing...' : 'Testing connection...', style: Theme.of(context).textTheme.bodyLarge),
               ],
             ),
           ),
@@ -322,6 +564,17 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
     if (!_formKey.currentState!.validate()) return;
     
     final provider = context.read<EmailProvider>();
+    provider.setUseManualRecipients(_useManual);
+
+    if (_useManual) {
+      provider.setRecipients(_parsedContacts);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const TemplateConfigScreen()),
+      );
+      return;
+    }
+    
     final result = await provider.testSheetConnection(_sheetIdController.text.trim());
     
     if (!mounted) return;

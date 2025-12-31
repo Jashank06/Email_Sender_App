@@ -8,6 +8,8 @@ class EmailProvider extends ChangeNotifier {
   String _subject = '';
   String _template = '';
   String _senderName = '';
+  List<Map<String, String>> _recipients = [];
+  bool _useManualRecipients = false;
   
   bool _isLoading = false;
   bool _isSending = false;
@@ -20,6 +22,8 @@ class EmailProvider extends ChangeNotifier {
   String get subject => _subject;
   String get template => _template;
   String get senderName => _senderName;
+  List<Map<String, String>> get recipients => _recipients;
+  bool get useManualRecipients => _useManualRecipients;
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
   String? get error => _error;
@@ -54,6 +58,18 @@ class EmailProvider extends ChangeNotifier {
   // Set sender name
   void setSenderName(String name) {
     _senderName = name;
+    notifyListeners();
+  }
+
+  // Set recipients
+  void setRecipients(List<Map<String, String>> list) {
+    _recipients = list;
+    notifyListeners();
+  }
+
+  // Set use manual recipients
+  void setUseManualRecipients(bool use) {
+    _useManualRecipients = use;
     notifyListeners();
   }
   
@@ -125,7 +141,9 @@ class EmailProvider extends ChangeNotifier {
   
   // Send bulk emails
   Future<bool> sendBulkEmails() async {
-    if (_emailConfig == null || _sheetId.isEmpty || _subject.isEmpty || _template.isEmpty) {
+    if (_emailConfig == null || _subject.isEmpty || _template.isEmpty || 
+        (!_useManualRecipients && _sheetId.isEmpty) || 
+        (_useManualRecipients && _recipients.isEmpty)) {
       _error = 'Please configure all required fields';
       notifyListeners();
       return false;
@@ -141,7 +159,8 @@ class EmailProvider extends ChangeNotifier {
         provider: _emailConfig!.provider,
         email: _emailConfig!.email,
         password: _emailConfig!.password,
-        sheetId: _sheetId,
+        sheetId: _useManualRecipients ? null : _sheetId,
+        recipients: _useManualRecipients ? _recipients : null,
         subject: _subject,
         template: _template,
         senderName: _senderName,
@@ -173,6 +192,8 @@ class EmailProvider extends ChangeNotifier {
     _subject = '';
     _template = '';
     _senderName = '';
+    _recipients = [];
+    _useManualRecipients = false;
     _error = null;
     _sendResult = null;
     notifyListeners();

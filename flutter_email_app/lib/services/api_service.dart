@@ -1,17 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/environment.dart';
 
 class ApiService {
-  // ⚙️ PRODUCTION CONFIGURATION
-  // Backend running on Hostinger VPS
-  static const String baseUrl = 'http://148.135.136.17:3002';
-  
-  // 📝 For different environments:
-  // - Development (Chrome/macOS): http://localhost:3000
-  // - Android Emulator: http://10.0.2.2:3000
-  // - iOS Simulator: http://localhost:3000
-  // - Physical Device (Same WiFi): http://YOUR_MAC_IP:3000
-  // - Production APK: https://yourdomain.com (Your Hostinger URL)
+  // ⚙️ DYNAMIC CONFIGURATION
+  // Automatically switches between development and production
+  static String get baseUrl => Environment.baseUrl;
   
   // Test email configuration
   Future<Map<String, dynamic>> testEmail({
@@ -60,7 +54,8 @@ class ApiService {
     required String provider,
     required String email,
     required String password,
-    required String sheetId,
+    String? sheetId,
+    List<Map<String, String>>? recipients,
     required String subject,
     required String template,
     String? senderName,
@@ -75,6 +70,7 @@ class ApiService {
           'email': email,
           'password': password,
           'sheetId': sheetId,
+          'recipients': recipients,
           'subject': subject,
           'template': template,
           'senderName': senderName ?? '',

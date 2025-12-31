@@ -11,7 +11,7 @@ class GlassmorphicCard extends StatefulWidget {
   final double blur;
   final double opacity;
   final VoidCallback? onTap;
-  final bool animate;
+  final bool enableTapAnimation;
   
   const GlassmorphicCard({
     super.key,
@@ -23,7 +23,7 @@ class GlassmorphicCard extends StatefulWidget {
     this.blur = 10,
     this.opacity = 0.1,
     this.onTap,
-    this.animate = true,
+    this.enableTapAnimation = true,
   });
 
   @override
@@ -66,17 +66,17 @@ class _GlassmorphicCardState extends State<GlassmorphicCard>
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onTapDown: widget.animate ? (_) => _controller.forward() : null,
+        onTapDown: widget.enableTapAnimation ? (_) => _controller.forward() : null,
         onTapUp: (_) {
-          if (widget.animate) _controller.reverse();
+          if (widget.enableTapAnimation) _controller.reverse();
           widget.onTap?.call();
         },
-        onTapCancel: widget.animate ? () => _controller.reverse() : null,
+        onTapCancel: widget.enableTapAnimation ? () => _controller.reverse() : null,
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
             return Transform.scale(
-              scale: widget.animate ? _scaleAnimation.value : 1.0,
+              scale: widget.enableTapAnimation ? _scaleAnimation.value : 1.0,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -93,7 +93,7 @@ class _GlassmorphicCardState extends State<GlassmorphicCard>
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.glowBlue.withOpacity(
-                        widget.animate ? _elevationAnimation.value : 0.1
+                        widget.enableTapAnimation ? _elevationAnimation.value : 0.1
                       ),
                       blurRadius: _isHovered ? 30 : 20,
                       offset: Offset(0, _isHovered ? 15 : 10),

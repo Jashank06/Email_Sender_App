@@ -277,7 +277,7 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
           _buildVariableChip('{{email}}', 'Contact email'),
         ],
       ),
-    ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0);
+    );
   }
   
   Widget _buildVariableChip(String variable, String description) {

@@ -221,7 +221,7 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0);
+    );
   }
   
   Widget _buildProviderOption(String value, String label, IconData icon) {
@@ -375,7 +375,7 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0);
+    );
   }
   
   Widget _buildContinueButton(BuildContext context) {

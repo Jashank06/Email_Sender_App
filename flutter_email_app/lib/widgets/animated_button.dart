@@ -71,9 +71,6 @@ class _AnimatedButtonState extends State<AnimatedButton>
         onTapUp: (_) {
           setState(() => _isPressed = false);
           _controller.reverse();
-          if (widget.onPressed != null && !widget.isLoading) {
-            widget.onPressed!();
-          }
         },
         onTapCancel: () {
           setState(() => _isPressed = false);
@@ -139,7 +136,11 @@ class _AnimatedButtonState extends State<AnimatedButton>
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: widget.onPressed != null && !widget.isLoading
-                        ? () {}
+                        ? () {
+                            setState(() => _isPressed = false);
+                            _controller.reverse();
+                            widget.onPressed!();
+                          }
                         : null,
                     child: Center(
                       child: widget.isLoading

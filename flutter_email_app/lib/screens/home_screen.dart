@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../utils/theme.dart';
 import '../widgets/glassmorphic_card.dart';
@@ -85,11 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
                         ),
                         textAlign: TextAlign.center,
-                      ).animate()
-                        .fadeIn(duration: 600.ms)
-                        .slideY(begin: -0.2, end: 0)
-                        .then()
-                        .shimmer(duration: 2000.ms, color: Colors.white.withOpacity(0.5)),
+                      ),
                       
                       const SizedBox(height: 16),
                       
@@ -97,9 +92,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         'Send personalized emails from Google Sheets\nwith Gmail & Outlook support',
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
-                      ).animate()
-                        .fadeIn(duration: 600.ms, delay: 400.ms)
-                        .slideY(begin: 0.2, end: 0),
+                      ),
                       
                       const SizedBox(height: 60),
                       
@@ -195,10 +188,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           },
         ),
       ),
-    ).animate()
-      .scale(duration: 600.ms, curve: Curves.easeOutBack)
-      .then()
-      .shimmer(duration: 1500.ms, color: Colors.white.withOpacity(0.3));
+    );
   }
   
   Widget _buildFeatureCards() {
@@ -266,9 +256,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-            ).animate()
-              .fadeIn(duration: 600.ms, delay: (600 + index * 200).ms)
-              .slideY(begin: 0.3, end: 0),
+            ),
           ),
         );
       }).toList(),
@@ -325,10 +313,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
-    ).animate()
-      .fadeIn(duration: 600.ms, delay: 1200.ms)
-      .slideY(begin: 0.3, end: 0)
-      .then()
-      .shimmer(duration: 2000.ms, delay: 1000.ms);
+    );
   }
 }
