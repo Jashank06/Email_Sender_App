@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../utils/theme.dart';
 import '../widgets/glassmorphic_card.dart';
 import '../widgets/animated_button.dart';
+import '../widgets/animated_background.dart';
 import 'home_screen.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -161,79 +162,9 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
     final authProvider = Provider.of<AuthProvider>(context);
     
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlack,
-              AppTheme.secondaryBlack,
-              AppTheme.primaryBlack,
-            ],
-          ),
-        ),
+      body: AnimatedBackground(
         child: Stack(
           children: [
-            // 3D Rotating background effect
-            ...List.generate(5, (index) {
-              return AnimatedBuilder(
-                animation: _rotateController,
-                builder: (context, child) {
-                  final angle = (_rotateController.value * 2 * math.pi) + (index * 2 * math.pi / 5);
-                  final radius = 200.0;
-                  final x = MediaQuery.of(context).size.width / 2 + radius * math.cos(angle);
-                  final y = MediaQuery.of(context).size.height / 2 + radius * math.sin(angle);
-                  
-                  return Positioned(
-                    left: x - 50,
-                    top: y - 50,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            index % 2 == 0
-                                ? AppTheme.accentPurple.withOpacity(0.15)
-                                : AppTheme.accentBlue.withOpacity(0.15),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            }),
-            
-            // Pulsing center glow
-            Center(
-              child: AnimatedBuilder(
-                animation: _pulseController,
-                builder: (context, child) {
-                  final scale = 1.0 + (_pulseController.value * 0.5);
-                  return Transform.scale(
-                    scale: scale,
-                    child: Container(
-                      width: 300,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            AppTheme.accentPurple.withOpacity(0.2 * (1 - _pulseController.value)),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            
             // Content
             SafeArea(
               child: Column(
@@ -243,45 +174,46 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
                     padding: const EdgeInsets.all(16),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                          onPressed: () => Navigator.pop(context),
+                        ),
                       ),
                     ),
                   ),
                   
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      physics: const BouncingScrollPhysics(),
                       child: Column(
                         children: [
                           const SizedBox(height: 20),
                           
-                          // 3D Lock icon with glow
+                          // 3D Lock icon with Monochrome Glow
                           AnimatedBuilder(
                             animation: _glowController,
                             builder: (context, child) {
                               return Container(
-                                padding: const EdgeInsets.all(30),
+                                padding: const EdgeInsets.all(40),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  gradient: RadialGradient(
-                                    colors: [
-                                      AppTheme.accentPurple.withOpacity(0.4 * _glowController.value),
-                                      AppTheme.accentBlue.withOpacity(0.4 * (1 - _glowController.value)),
-                                      Colors.transparent,
-                                    ],
-                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppTheme.accentPurple.withOpacity(0.5 * _glowController.value),
+                                      color: Colors.white.withOpacity(0.1 * _glowController.value),
                                       blurRadius: 60,
                                       spreadRadius: 20,
                                     ),
                                     BoxShadow(
-                                      color: AppTheme.accentBlue.withOpacity(0.5 * (1 - _glowController.value)),
-                                      blurRadius: 60,
-                                      spreadRadius: 20,
+                                      color: Colors.black.withOpacity(0.5),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
                                     ),
                                   ],
                                 ),
@@ -291,21 +223,23 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
                                     ..rotateY(_rotateController.value * 2 * math.pi),
                                   alignment: Alignment.center,
                                   child: Container(
-                                    padding: const EdgeInsets.all(20),
+                                    padding: const EdgeInsets.all(25),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
+                                      color: Colors.black,
+                                      border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
                                       gradient: LinearGradient(
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppTheme.accentPurple,
-                                          AppTheme.accentBlue,
+                                          Colors.white.withOpacity(0.1),
+                                          Colors.black,
                                         ],
                                       ),
                                     ),
                                     child: const Icon(
                                       Icons.lock_rounded,
-                                      size: 60,
+                                      size: 50,
                                       color: Colors.white,
                                     ),
                                   ),
@@ -314,18 +248,16 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
                             },
                           ),
                           
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 48),
                           
                           // Title
-                          Text(
-                            'Verify Your Email',
+                          const Text(
+                            'VERIFICATION',
                             style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              foreground: Paint()
-                                ..shader = LinearGradient(
-                                  colors: [AppTheme.accentPurple, AppTheme.accentBlue],
-                                ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 4.0,
                             ),
                           ),
                           
@@ -333,21 +265,24 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
                           
                           // Subtitle
                           Text(
-                            'We sent a 6-digit code to',
+                            'SECURE CODE DISPATCHED TO',
                             style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.accentWhite.withOpacity(0.4),
+                              letterSpacing: 2.0,
                             ),
                           ),
                           
                           const SizedBox(height: 8),
                           
                           Text(
-                            widget.email,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.accentPurple,
+                            widget.email.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
                             ),
                           ),
                           
@@ -355,36 +290,61 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
                           
                           // OTP Input fields
                           GlassmorphicCard(
+                            blur: 30,
+                            opacity: 0.04,
+                            borderRadius: 32,
                             child: Padding(
-                              padding: const EdgeInsets.all(32),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
                               child: Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: List.generate(6, (index) {
                                       return _buildOtpField(index);
                                     }),
                                   ),
                                   
-                                  const SizedBox(height: 40),
+                                  const SizedBox(height: 50),
                                   
                                   // Verify button
                                   AnimatedButton(
                                     onPressed: authProvider.isLoading ? null : _verifyOtp,
-                                    text: 'Verify & Continue',
+                                    text: 'VERIFY STATION',
+                                    icon: Icons.verified_user_rounded,
+                                    isLoading: authProvider.isLoading,
                                   ),
                                   
-                                  const SizedBox(height: 20),
+                                  const SizedBox(height: 32),
                                   
                                   // Resend OTP
-                                  TextButton(
-                                    onPressed: authProvider.isLoading ? null : _resendOtp,
-                                    child: Text(
-                                      'Didn\'t receive code? Resend',
-                                      style: TextStyle(
-                                        color: AppTheme.accentPurple,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                  GestureDetector(
+                                    onTap: authProvider.isLoading ? null : _resendOtp,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.03),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: Colors.white.withOpacity(0.05)),
+                                      ),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          text: 'NO CODE? ',
+                                          style: TextStyle(
+                                            color: AppTheme.accentWhite.withOpacity(0.4),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1.5,
+                                          ),
+                                          children: const [
+                                            TextSpan(
+                                              text: 'RESEND',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -399,31 +359,6 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            
-            // Loading overlay
-            if (authProvider.isLoading)
-              Container(
-                color: Colors.black54,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentPurple),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Verifying...',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -432,59 +367,70 @@ class _OtpScreenState extends State<OtpScreen> with TickerProviderStateMixin {
   
   Widget _buildOtpField(int index) {
     return Container(
-      width: 50,
+      width: 45,
       height: 60,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: _focusNodes[index].hasFocus
-              ? AppTheme.accentPurple
+              ? Colors.white.withOpacity(0.8)
               : Colors.white.withOpacity(0.1),
-          width: 2,
+          width: 1.5,
         ),
-        boxShadow: _focusNodes[index].hasFocus
-            ? [
-                BoxShadow(
-                  color: AppTheme.accentPurple.withOpacity(0.3),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ]
-            : null,
-      ),
-      child: TextField(
-        controller: _otpControllers[index],
-        focusNode: _focusNodes[index],
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-        ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
+        boxShadow: [
+          if (_focusNodes[index].hasFocus)
+            BoxShadow(
+              color: Colors.white.withOpacity(0.1),
+              blurRadius: 15,
+              spreadRadius: 1,
+            ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
         ],
-        onChanged: (value) {
-          if (value.isNotEmpty) {
-            // Move to next field
-            if (index < 5) {
-              _focusNodes[index + 1].requestFocus();
-            } else {
-              // Last field, hide keyboard
-              _focusNodes[index].unfocus();
+      ),
+      child: Center(
+        child: TextField(
+          controller: _otpControllers[index],
+          focusNode: _focusNodes[index],
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          maxLength: 1,
+          showCursor: false,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 0,
+          ),
+          decoration: const InputDecoration(
+            counterText: '',
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+            isDense: true,
+          ),
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
+          onChanged: (value) {
+            if (value.length == 1) {
+              if (index < 5) {
+                _focusNodes[index + 1].requestFocus();
+              } else {
+                _focusNodes[index].unfocus();
+                _verifyOtp();
+              }
+            } else if (value.isEmpty) {
+              if (index > 0) {
+                _focusNodes[index - 1].requestFocus();
+              }
             }
-          } else if (value.isEmpty && index > 0) {
-            // Move to previous field on backspace
-            _focusNodes[index - 1].requestFocus();
-          }
-        },
+            setState(() {}); // Update border color
+          },
+        ),
       ),
     );
   }

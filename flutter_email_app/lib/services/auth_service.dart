@@ -114,6 +114,9 @@ class AuthService {
     required String name,
     required String phone,
     required String dateOfBirth,
+    String? savedEmail,
+    String? savedPassword,
+    String? savedProvider,
   }) async {
     try {
       final response = await http.put(
@@ -124,6 +127,9 @@ class AuthService {
           'name': name,
           'phone': phone,
           'dateOfBirth': dateOfBirth,
+          'savedEmail': savedEmail,
+          'savedPassword': savedPassword,
+          'savedProvider': savedProvider,
         }),
       );
 

@@ -4,6 +4,9 @@ class User {
   final String email;
   final String phone;
   final String dateOfBirth;
+  final String savedEmail;
+  final String savedPassword;
+  final String savedProvider;
 
   User({
     required this.userId,
@@ -11,6 +14,9 @@ class User {
     required this.email,
     required this.phone,
     required this.dateOfBirth,
+    this.savedEmail = '',
+    this.savedPassword = '',
+    this.savedProvider = 'gmail',
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -20,6 +26,9 @@ class User {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       dateOfBirth: json['dateOfBirth'] ?? '',
+      savedEmail: json['savedEmail'] ?? '',
+      savedPassword: json['savedPassword'] ?? '',
+      savedProvider: json['savedProvider'] ?? 'gmail',
     );
   }
 
@@ -30,6 +39,9 @@ class User {
       'email': email,
       'phone': phone,
       'dateOfBirth': dateOfBirth,
+      'savedEmail': savedEmail,
+      'savedPassword': savedPassword,
+      'savedProvider': savedProvider,
     };
   }
 
@@ -39,6 +51,9 @@ class User {
     String? email,
     String? phone,
     String? dateOfBirth,
+    String? savedEmail,
+    String? savedPassword,
+    String? savedProvider,
   }) {
     return User(
       userId: userId ?? this.userId,
@@ -46,6 +61,9 @@ class User {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      savedEmail: savedEmail ?? this.savedEmail,
+      savedPassword: savedPassword ?? this.savedPassword,
+      savedProvider: savedProvider ?? this.savedProvider,
     );
   }
 }

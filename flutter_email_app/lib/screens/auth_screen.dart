@@ -6,6 +6,9 @@ import '../providers/auth_provider.dart';
 import '../utils/theme.dart';
 import '../widgets/glassmorphic_card.dart';
 import '../widgets/animated_button.dart';
+import '../widgets/animated_background.dart';
+import '../widgets/animated_text_field.dart';
+import '../widgets/page_transition.dart';
 import 'otp_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -81,13 +84,16 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       builder: (context, child) {
         return Theme(
           data: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppTheme.glowPurple,
-              onPrimary: Colors.white,
-              surface: AppTheme.primaryBlack,
+            colorScheme: const ColorScheme.dark(
+              primary: Colors.white,
+              onPrimary: Colors.black,
+              surface: AppTheme.secondaryBlack,
               onSurface: Colors.white,
             ),
             dialogBackgroundColor: AppTheme.primaryBlack,
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
+            ),
           ),
           child: child!,
         );
@@ -111,22 +117,22 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       // Signup validation
       if (_nameController.text.trim().isEmpty) {
         debugPrint('Signup validation failed: Name empty');
-        _showError('Please enter your name');
+        _showError('PLEASE ENTER YOUR NAME');
         return;
       }
       if (_emailController.text.trim().isEmpty || !_emailController.text.contains('@')) {
         debugPrint('Signup validation failed: Email invalid');
-        _showError('Please enter a valid email');
+        _showError('PLEASE ENTER A VALID EMAIL');
         return;
       }
       if (_phoneController.text.trim().isEmpty) {
         debugPrint('Signup validation failed: Phone empty');
-        _showError('Please enter your phone number');
+        _showError('PLEASE ENTER YOUR PHONE NUMBER');
         return;
       }
       if (_dobController.text.trim().isEmpty) {
         debugPrint('Signup validation failed: DOB empty');
-        _showError('Please select your date of birth');
+        _showError('PLEASE SELECT YOUR DATE OF BIRTH');
         return;
       }
       
@@ -144,8 +150,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       if (success && mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => OtpScreen(
+          CustomPageTransition(
+            child: OtpScreen(
               email: _emailController.text.trim(),
               isSignup: true,
             ),
@@ -160,7 +166,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       // Login validation
       if (_emailController.text.trim().isEmpty || !_emailController.text.contains('@')) {
         debugPrint('Login validation failed: Email invalid');
-        _showError('Please enter a valid email');
+        _showError('PLEASE ENTER A VALID EMAIL');
         return;
       }
       
@@ -175,8 +181,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       if (success && mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => OtpScreen(
+          CustomPageTransition(
+            child: OtpScreen(
               email: _emailController.text.trim(),
               isSignup: false,
             ),
@@ -192,10 +198,39 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade400,
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
+              ),
+              child: const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.black.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -205,164 +240,124 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     final authProvider = Provider.of<AuthProvider>(context);
     
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlack,
-              AppTheme.secondaryBlack,
-              AppTheme.primaryBlack,
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Animated background orbs
-            Positioned(
-              top: -100,
-              left: -100,
-              child: AnimatedBuilder(
-                animation: _glowController,
-                builder: (context, child) {
-                  return Container(
-                    width: 300,
-                    height: 300,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppTheme.glowPurple.withOpacity(0.3 * _glowController.value),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            Positioned(
-              bottom: -150,
-              right: -150,
-              child: AnimatedBuilder(
-                animation: _glowController,
-                builder: (context, child) {
-                  return Container(
-                    width: 400,
-                    height: 400,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppTheme.glowBlue.withOpacity(0.3 * (1 - _glowController.value)),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            
-            // Content
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
-                    
-                    // Logo and Title
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.glowPurple.withOpacity(0.3),
-                            AppTheme.glowBlue.withOpacity(0.3),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.glowPurple.withOpacity(0.3),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.email_rounded,
-                        size: 60,
-                        color: Colors.white,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    Text(
-                      'Email Sender Pro',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        foreground: Paint()
-                          ..shader = LinearGradient(
-                            colors: [AppTheme.glowPurple, AppTheme.glowBlue],
-                          ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 10),
-                    
-                    Text(
-                      'Send beautiful emails effortlessly',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 50),
-                    
-                    // Auth Form Card
-                    AnimatedBuilder(
-                      animation: _flipController,
-                      builder: (context, child) {
-                        final angle = _flipController.value * math.pi;
-                        final transform = Matrix4.identity()
-                          ..setEntry(3, 2, 0.001)
-                          ..rotateY(angle);
-                        
-                        return Transform(
-                          transform: transform,
-                          alignment: Alignment.center,
-                          child: angle <= math.pi / 2 
-                            ? _buildAuthForm(authProvider) 
-                            : Transform(
-                                transform: Matrix4.identity()..rotateY(math.pi),
-                                alignment: Alignment.center,
-                                child: _buildAuthForm(authProvider),
+      body: AnimatedBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                
+                // Animated Logo (Monochrome)
+                Hero(
+                  tag: 'app_logo',
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          padding: const EdgeInsets.all(28),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black,
+                            border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.15),
+                                blurRadius: 40,
+                                spreadRadius: 5,
                               ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            // Loading overlay
-            if (authProvider.isLoading)
-              Container(
-                color: Colors.black54,
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.email_rounded,
+                            size: 60,
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
-          ],
+                
+                const SizedBox(height: 32),
+                
+                // Animated Title
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 600),
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'EMAIL SENDER PRO',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2.5,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'PREMIUM DISPATCH STATION',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.accentWhite.withOpacity(0.4),
+                                letterSpacing: 4.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                
+                const SizedBox(height: 50),
+                
+                // Auth Form Card with 3D Flip Animation
+                AnimatedBuilder(
+                  animation: _flipController,
+                  builder: (context, child) {
+                    final angle = _flipController.value * math.pi;
+                    final transform = Matrix4.identity()
+                      ..setEntry(3, 2, 0.002)
+                      ..rotateY(angle);
+                    
+                    return Transform(
+                      transform: transform,
+                      alignment: Alignment.center,
+                      child: angle <= math.pi / 2 
+                        ? _buildAuthForm(authProvider) 
+                        : Transform(
+                            transform: Matrix4.identity()..rotateY(math.pi),
+                            alignment: Alignment.center,
+                            child: _buildAuthForm(authProvider),
+                          ),
+                    );
+                  },
+                ),
+                
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -370,95 +365,134 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   
   Widget _buildAuthForm(AuthProvider authProvider) {
     return GlassmorphicCard(
+      blur: 30,
+      opacity: 0.04,
+      borderRadius: 32,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Toggle buttons
-            Row(
-              children: [
-                Expanded(
-                  child: _buildToggleButton('Login', !_isSignup),
+            // Toggle buttons with improved design
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.08),
+                  width: 1,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildToggleButton('Signup', _isSignup),
-                ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildToggleButton('LOGIN', !_isSignup),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _buildToggleButton('SIGNUP', _isSignup),
+                  ),
+                ],
+              ),
             ),
             
-            const SizedBox(height: 30),
+            const SizedBox(height: 32),
             
-            // Form fields
-            if (_isSignup) ...[
-              _buildTextField(
-                controller: _nameController,
-                label: 'Full Name',
-                icon: Icons.person_outline,
-                hint: 'John Doe',
+            // Form fields with AnimatedTextField
+            AnimatedSize(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              child: Column(
+                children: [
+                  if (_isSignup) ...[
+                    AnimatedTextField(
+                      controller: _nameController,
+                      label: 'FULL NAME',
+                      hint: 'John Doe',
+                      prefixIcon: Icons.person_outline_rounded,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  AnimatedTextField(
+                    controller: _emailController,
+                    label: 'EMAIL ADDRESS',
+                    hint: 'john@example.com',
+                    prefixIcon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  
+                  if (_isSignup) ...[
+                    const SizedBox(height: 24),
+                    AnimatedTextField(
+                      controller: _phoneController,
+                      label: 'PHONE NUMBER',
+                      hint: '+1 234 567 8900',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 24),
+                    AnimatedTextField(
+                      controller: _dobController,
+                      label: 'DATE OF BIRTH',
+                      hint: 'Select your birth date',
+                      prefixIcon: Icons.calendar_today_outlined,
+                      suffixIcon: Icons.expand_more_rounded,
+                      onSuffixTap: _selectDate,
+                      readOnly: true,
+                      onTap: _selectDate,
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
-            
-            _buildTextField(
-              controller: _emailController,
-              label: 'Email',
-              icon: Icons.email_outlined,
-              hint: 'john@example.com',
-              keyboardType: TextInputType.emailAddress,
             ),
             
-            if (_isSignup) ...[
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _phoneController,
-                label: 'Phone Number',
-                icon: Icons.phone_outlined,
-                hint: '+1 234 567 8900',
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _dobController,
-                label: 'Date of Birth',
-                icon: Icons.cake_outlined,
-                hint: 'YYYY-MM-DD',
-                readOnly: true,
-                onTap: _selectDate,
-              ),
-            ],
+            const SizedBox(height: 40),
             
-            const SizedBox(height: 30),
-            
-            // Submit button
+            // Submit button with loading state
             AnimatedButton(
               onPressed: authProvider.isLoading ? null : _handleAuth,
-              text: _isSignup ? 'Get OTP' : 'Login with OTP',
+              text: _isSignup ? 'CREATE ACCOUNT' : 'SECURE LOGIN',
+              icon: _isSignup ? Icons.add_moderator_outlined : Icons.lock_open_rounded,
+              isLoading: authProvider.isLoading,
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
             
-            // Toggle text
+            // Toggle text with better design
             Center(
-              child: TextButton(
-                onPressed: _toggleMode,
-                child: RichText(
-                  text: TextSpan(
-                    text: _isSignup ? 'Already have an account? ' : "Don't have an account? ",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 14,
+              child: GestureDetector(
+                onTap: _toggleMode,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.05),
+                      width: 1,
                     ),
-                    children: [
-                      TextSpan(
-                        text: _isSignup ? 'Login' : 'Signup',
-                        style: TextStyle(
-                          color: AppTheme.glowPurple,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  ),
+                  child: RichText(
+                    text: TextSpan(
+                      text: _isSignup ? 'EXISTING USER? ' : "NEW USER? ",
+                      style: TextStyle(
+                        color: AppTheme.accentWhite.withOpacity(0.4),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
                       ),
-                    ],
+                      children: [
+                        TextSpan(
+                          text: _isSignup ? 'LOG IN' : 'SIGN UP',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -470,31 +504,42 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   }
   
   Widget _buildToggleButton(String text, bool isActive) {
-    return GestureDetector(
-      onTap: () {
-        if (!isActive) _toggleMode();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          gradient: isActive
-              ? LinearGradient(
-                  colors: [AppTheme.glowPurple, AppTheme.glowBlue],
-                )
-              : null,
-          color: isActive ? null : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isActive ? Colors.transparent : Colors.white.withOpacity(0.1),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-              fontSize: 16,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (!isActive) _toggleMode();
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              gradient: isActive ? AppTheme.primaryGradient : null,
+              color: isActive ? null : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Center(
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: isActive ? AppTheme.primaryBlack : Colors.white60,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  letterSpacing: 2.0,
+                ),
+              ),
             ),
           ),
         ),
@@ -502,56 +547,4 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     );
   }
   
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required String hint,
-    TextInputType? keyboardType,
-    bool readOnly = false,
-    VoidCallback? onTap,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-            ),
-          ),
-          child: TextField(
-            controller: controller,
-            readOnly: readOnly,
-            onTap: onTap,
-            keyboardType: keyboardType,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                color: Colors.white.withOpacity(0.3),
-              ),
-              prefixIcon: Icon(icon, color: AppTheme.glowPurple),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

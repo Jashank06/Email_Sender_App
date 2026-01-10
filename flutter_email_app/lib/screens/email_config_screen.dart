@@ -3,9 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../providers/email_provider.dart';
+import '../providers/auth_provider.dart';
 import '../models/email_config.dart';
 import '../utils/theme.dart';
 import '../widgets/glassmorphic_card.dart';
+import '../widgets/animated_background.dart';
+import '../widgets/animated_text_field.dart';
+import '../widgets/animated_button.dart';
 import 'sheet_config_screen.dart';
 
 class EmailConfigScreen extends StatefulWidget {
@@ -30,34 +34,25 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
   }
   
   @override
+  void initState() {
+    super.initState();
+    final user = context.read<AuthProvider>().currentUser;
+    if (user != null) {
+      _emailController.text = user.savedEmail;
+      _passwordController.text = user.savedPassword;
+      _selectedProvider = user.savedProvider.isNotEmpty ? user.savedProvider : 'gmail';
+    }
+  }
+
+
+  
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlack,
-              AppTheme.secondaryBlack,
-              AppTheme.primaryBlack,
-            ],
-          ),
-        ),
+      backgroundColor: AppTheme.primaryBlack,
+      body: AnimatedBackground(
         child: Stack(
           children: [
-            // Background orbs
-            _buildBackgroundOrb(
-              top: -100,
-              right: -100,
-              color: AppTheme.glowBlue,
-            ),
-            _buildBackgroundOrb(
-              bottom: -150,
-              left: -150,
-              color: AppTheme.glowPurple,
-            ),
-            
             // Main content
             SafeArea(
               child: Column(
@@ -68,38 +63,50 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
                   // Form content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      physics: const BouncingScrollPhysics(),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const SizedBox(height: 20),
                             // Title
-                            Text(
-                              'Configure Email',
-                              style: Theme.of(context).textTheme.headlineMedium,
+                            const Text(
+                              'EMAIL PROTOCOL',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2.0,
+                              ),
                             ).animate().fadeIn().slideX(begin: -0.2, end: 0),
                             
                             const SizedBox(height: 8),
                             
                             Text(
-                              'Choose your email provider and enter credentials',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              'CONFIGURE STATION COMMUNICATION CHANNEL',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.accentWhite.withOpacity(0.4),
+                                letterSpacing: 1.5,
+                              ),
                             ).animate()
                               .fadeIn(delay: 100.ms)
                               .slideX(begin: -0.2, end: 0),
                             
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 48),
                             
                             // Provider selection
                             _buildProviderSelection(),
                             
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 32),
                             
                             // Email input
                             _buildEmailInput(),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
                             
                             // Password input
                             _buildPasswordInput(),
@@ -109,10 +116,12 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
                             // Info card
                             _buildInfoCard(),
                             
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 48),
                             
                             // Continue button
                             _buildContinueButton(context),
+                            
+                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
@@ -135,64 +144,32 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
         ),
       ),
     );
-  }
-  
-  Widget _buildBackgroundOrb({
-    double? top,
-    double? bottom,
-    double? left,
-    double? right,
-    required Color color,
-  }) {
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: Container(
-        width: 300,
-        height: 300,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
+}
+
   Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.glassWhite,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                ),
-              ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: AppTheme.accentWhite,
-              ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
           const SizedBox(width: 16),
           Text(
-            'Step 1 of 3',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.accentWhite.withOpacity(0.6),
+            'STEP 01 / 03',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.accentWhite.withOpacity(0.3),
+              letterSpacing: 2.0,
             ),
           ),
         ],
@@ -201,26 +178,27 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
   }
   
   Widget _buildProviderSelection() {
-    return GlassmorphicCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Email Provider',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SELECT PROVIDER',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.accentWhite.withOpacity(0.4),
+            letterSpacing: 1.5,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildProviderOption('gmail', 'Gmail', Icons.mail_rounded),
-              const SizedBox(width: 16),
-              _buildProviderOption('outlook', 'Outlook', Icons.email_rounded),
-            ],
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            _buildProviderOption('gmail', 'GMAIL', Icons.mail_outline_rounded),
+            const SizedBox(width: 16),
+            _buildProviderOption('outlook', 'OUTLOOK', Icons.alternate_email_rounded),
+          ],
+        ),
+      ],
     );
   }
   
@@ -235,32 +213,42 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
           });
         },
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 24),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
             color: isSelected 
-                ? AppTheme.glowBlue.withOpacity(0.2)
-                : Colors.white.withOpacity(0.05),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.3),
             border: Border.all(
               color: isSelected 
-                  ? AppTheme.glowBlue 
+                  ? Colors.white.withOpacity(0.8)
                   : Colors.white.withOpacity(0.1),
-              width: 2,
+              width: 1.5,
             ),
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.05),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+            ],
           ),
           child: Column(
             children: [
               Icon(
                 icon,
-                color: isSelected ? AppTheme.glowBlue : AppTheme.accentWhite,
+                color: isSelected ? Colors.white : Colors.white24,
                 size: 32,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
                 label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? AppTheme.glowBlue : AppTheme.accentWhite,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: isSelected ? Colors.white : Colors.white24,
+                  letterSpacing: 1.5,
                 ),
               ),
             ],
@@ -271,109 +259,59 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
   }
   
   Widget _buildEmailInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Email Address',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          style: const TextStyle(color: AppTheme.accentWhite),
-          decoration: InputDecoration(
-            hintText: _selectedProvider == 'gmail' 
-                ? 'your-email@gmail.com' 
-                : 'your-email@outlook.com',
-            prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.glowBlue),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your email';
-            }
-            if (!value.contains('@')) {
-              return 'Please enter a valid email';
-            }
-            return null;
-          },
-        ),
-      ],
+    return AnimatedTextField(
+      controller: _emailController,
+      label: 'STATION EMAIL',
+      hint: _selectedProvider == 'gmail' ? 'STATION@GMAIL.COM' : 'STATION@OUTLOOK.COM',
+      prefixIcon: Icons.alternate_email_rounded,
     ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0);
   }
   
   Widget _buildPasswordInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'App Password',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _passwordController,
-          obscureText: _obscurePassword,
-          style: const TextStyle(color: AppTheme.accentWhite),
-          decoration: InputDecoration(
-            hintText: 'Enter your app password',
-            prefixIcon: const Icon(Icons.lock_outlined, color: AppTheme.glowBlue),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: AppTheme.accentWhite.withOpacity(0.5),
-              ),
-              onPressed: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-            ),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your app password';
-            }
-            return null;
-          },
-        ),
-      ],
+    return AnimatedTextField(
+      controller: _passwordController,
+      label: 'APP PASSWORD',
+      hint: '••••••••••••••••',
+      obscureText: true,
+      prefixIcon: Icons.vpn_key_rounded,
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0);
   }
   
   Widget _buildInfoCard() {
     return GlassmorphicCard(
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.glowBlue.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.info_outline,
-              color: AppTheme.glowBlue,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _selectedProvider == 'gmail'
-                  ? 'Use Gmail App Password, not your regular password'
-                  : 'Use Outlook App Password for better security',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 12,
+      borderRadius: 16,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.security_rounded,
+                color: Colors.white30,
+                size: 16,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                _selectedProvider == 'gmail'
+                    ? 'SECURITY: USE GOOGLE APP PASSWORD FOR AUTHENTICATION'
+                    : 'SECURITY: OUTLOOK APP PASSWORDS REQUIRED FOR STATION ACCESS',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.accentWhite.withOpacity(0.3),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -381,57 +319,11 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
   Widget _buildContinueButton(BuildContext context) {
     return Consumer<EmailProvider>(
       builder: (context, provider, _) {
-        return Container(
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [AppTheme.glowBlue, AppTheme.glowPurple],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.glowBlue.withOpacity(0.5),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: provider.isLoading ? null : () => _handleContinue(context),
-              child: Center(
-                child: provider.isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: AppTheme.primaryBlack,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Continue',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryBlack,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.arrow_forward_rounded,
-                            color: AppTheme.primaryBlack,
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-          ),
+        return AnimatedButton(
+          onPressed: provider.isLoading ? null : () => _handleContinue(context),
+          text: 'VERIFY STATION',
+          icon: Icons.chevron_right_rounded,
+          isLoading: provider.isLoading,
         ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0);
       },
     );
@@ -439,26 +331,26 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
   
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.7),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Center(
-          child: GlassmorphicCard(
-            width: 200,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(
-                  color: AppTheme.glowBlue,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Verifying...',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
+      color: Colors.black87,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
             ),
-          ),
+            const SizedBox(height: 24),
+            const Text(
+              'AUTHENTICATING...',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 3.0,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -480,6 +372,22 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
     if (!mounted) return;
     
     if (success) {
+      // Auto-save credentials to user profile
+      final authProvider = context.read<AuthProvider>();
+      final user = authProvider.currentUser;
+      if (user != null) {
+        await authProvider.updateProfile(
+          name: user.name,
+          phone: user.phone,
+          dateOfBirth: user.dateOfBirth,
+          savedEmail: _emailController.text.trim(),
+          savedPassword: _passwordController.text,
+          savedProvider: _selectedProvider,
+        );
+      }
+
+      if (!mounted) return;
+      
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -487,16 +395,21 @@ class _EmailConfigScreenState extends State<EmailConfigScreen> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.error ?? 'Failed to verify email configuration'),
-          backgroundColor: AppTheme.errorRed,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      _showSnack(provider.error?.toUpperCase() ?? 'VERIFICATION FAILED');
     }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, fontSize: 12)),
+        backgroundColor: Colors.black.withOpacity(0.9),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+      ),
+    );
   }
 }

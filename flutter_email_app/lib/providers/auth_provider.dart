@@ -192,6 +192,9 @@ class AuthProvider extends ChangeNotifier {
     required String name,
     required String phone,
     required String dateOfBirth,
+    String? savedEmail,
+    String? savedPassword,
+    String? savedProvider,
   }) async {
     if (_currentUser == null) {
       _error = 'No user logged in';
@@ -209,6 +212,9 @@ class AuthProvider extends ChangeNotifier {
         name: name,
         phone: phone,
         dateOfBirth: dateOfBirth,
+        savedEmail: savedEmail,
+        savedPassword: savedPassword,
+        savedProvider: savedProvider,
       );
 
       _isLoading = false;

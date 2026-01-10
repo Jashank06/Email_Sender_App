@@ -5,18 +5,85 @@ const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const mongoose = require('mongoose');
+const { Server } = require('socket.io');
+const http = require('http');
+
+// Import tracking models and utilities
+const { Campaign, EmailEvent, TrackedLink } = require('./models/trackingModels');
+const User = require('./models/userModel');
+const {
+  generateTrackingId,
+  generateShortId,
+  injectTrackingPixel,
+  replaceLinksWithTracking,
+  parseUserAgent,
+  getLocationFromIP,
+  getClientIP,
+  calculateStats
+} = require('./utils/trackingUtils');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 const PORT = process.env.PORT || 3000;
 
-// In-memory storage for users and OTPs (in production, use a database)
-const users = new Map();
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/email_sender_app';
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✅ MongoDB connected successfully'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+// In-memory storage for OTPs (users moved to MongoDB)
 const otpStore = new Map();
+
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 25 * 1024 * 1024 // 25MB limit per file
+  }
+});
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+
+// Use conditional middleware based on content-type
+app.use((req, res, next) => {
+  if (req.is('multipart/form-data')) {
+    // Skip body parsing for multipart, multer will handle it
+    return next();
+  }
+  // For JSON and urlencoded
+  bodyParser.json({ limit: '50mb' })(req, res, (err) => {
+    if (err) return next(err);
+    bodyParser.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
+  });
+});
 
 // Helper function to create OTP email transporter (using provided Gmail credentials)
 // Note: OTP functionality disabled - authentication removed from frontend
@@ -385,7 +452,8 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     // Check if user already exists
-    if (users.has(email)) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         message: 'Email already registered. Please login.'
@@ -470,14 +538,13 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
     // Create user account
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const user = {
+    const user = new User({
       userId,
       ...otpData.userData,
-      createdAt: new Date().toISOString(),
       isVerified: true
-    };
+    });
 
-    users.set(email, user);
+    await user.save();
     otpStore.delete(email);
 
     res.json({
@@ -488,7 +555,10 @@ app.post('/api/auth/verify-otp', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        dateOfBirth: user.dateOfBirth
+        dateOfBirth: user.dateOfBirth,
+        savedEmail: user.savedEmail,
+        savedPassword: user.savedPassword,
+        savedProvider: user.savedProvider
       }
     });
 
@@ -514,7 +584,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // Check if user exists
-    const user = users.get(email);
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -598,7 +668,11 @@ app.post('/api/auth/verify-login-otp', async (req, res) => {
     }
 
     // Get user data
-    const user = users.get(email);
+    const user = await User.findOne({ email });
+    if (user) {
+      user.lastLogin = new Date();
+      await user.save();
+    }
     otpStore.delete(email);
 
     res.json({
@@ -609,7 +683,10 @@ app.post('/api/auth/verify-login-otp', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        dateOfBirth: user.dateOfBirth
+        dateOfBirth: user.dateOfBirth,
+        savedEmail: user.savedEmail,
+        savedPassword: user.savedPassword,
+        savedProvider: user.savedProvider
       }
     });
 
@@ -623,11 +700,11 @@ app.post('/api/auth/verify-login-otp', async (req, res) => {
 });
 
 // Get User Profile
-app.get('/api/auth/profile/:email', (req, res) => {
+app.get('/api/auth/profile/:email', async (req, res) => {
   try {
     const { email } = req.params;
 
-    const user = users.get(email);
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -642,7 +719,10 @@ app.get('/api/auth/profile/:email', (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        dateOfBirth: user.dateOfBirth
+        dateOfBirth: user.dateOfBirth,
+        savedEmail: user.savedEmail,
+        savedPassword: user.savedPassword,
+        savedProvider: user.savedProvider
       }
     });
 
@@ -656,9 +736,9 @@ app.get('/api/auth/profile/:email', (req, res) => {
 });
 
 // Update User Profile (email cannot be changed)
-app.put('/api/auth/profile', (req, res) => {
+app.put('/api/auth/profile', async (req, res) => {
   try {
-    const { email, name, phone, dateOfBirth } = req.body;
+    const { email, name, phone, dateOfBirth, savedEmail, savedPassword, savedProvider } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -667,7 +747,7 @@ app.put('/api/auth/profile', (req, res) => {
       });
     }
 
-    const user = users.get(email);
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -679,9 +759,11 @@ app.put('/api/auth/profile', (req, res) => {
     if (name) user.name = name;
     if (phone) user.phone = phone;
     if (dateOfBirth) user.dateOfBirth = dateOfBirth;
-    user.updatedAt = new Date().toISOString();
+    if (savedEmail !== undefined) user.savedEmail = savedEmail;
+    if (savedPassword !== undefined) user.savedPassword = savedPassword;
+    if (savedProvider !== undefined) user.savedProvider = savedProvider;
 
-    users.set(email, user);
+    await user.save();
 
     res.json({
       success: true,
@@ -691,7 +773,10 @@ app.put('/api/auth/profile', (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        dateOfBirth: user.dateOfBirth
+        dateOfBirth: user.dateOfBirth,
+        savedEmail: user.savedEmail,
+        savedPassword: user.savedPassword,
+        savedProvider: user.savedProvider
       }
     });
 
@@ -701,6 +786,230 @@ app.put('/api/auth/profile', (req, res) => {
       success: false,
       message: error.message
     });
+  }
+});
+
+// ========================
+// TRACKING ROUTES
+// ========================
+
+// Email open tracking - Serves 1x1 transparent pixel
+app.get('/track/open/:trackingId', async (req, res) => {
+  try {
+    const { trackingId } = req.params;
+
+    // Find the email event
+    const emailEvent = await EmailEvent.findOne({ trackingId });
+
+    if (emailEvent) {
+      const now = new Date();
+      const userAgent = req.headers['user-agent'] || '';
+      const ipAddress = getClientIP(req);
+      const deviceInfo = parseUserAgent(userAgent);
+      const location = getLocationFromIP(ipAddress);
+
+      // Update open count
+      emailEvent.openCount += 1;
+
+      // Set first opened timestamp if not already set
+      if (!emailEvent.firstOpenedAt) {
+        emailEvent.firstOpenedAt = now;
+      }
+
+      // Update last opened timestamp
+      emailEvent.lastOpenedAt = now;
+
+      // Update status to opened if not already
+      if (emailEvent.status === 'sent' || emailEvent.status === 'delivered') {
+        emailEvent.status = 'opened';
+      }
+
+      // Add open event to events array
+      emailEvent.events.push({
+        type: 'opened',
+        timestamp: now,
+        metadata: {
+          userAgent,
+          ipAddress,
+          device: deviceInfo.device,
+          browser: deviceInfo.browser,
+          os: deviceInfo.os,
+          location: `${location.city}, ${location.country}`
+        }
+      });
+
+      // Update metadata
+      if (!emailEvent.metadata) {
+        emailEvent.metadata = {};
+      }
+      emailEvent.metadata.userAgent = userAgent;
+      emailEvent.metadata.ipAddress = ipAddress;
+      emailEvent.metadata.device = deviceInfo.device;
+      emailEvent.metadata.location = `${location.city}, ${location.country}`;
+
+      await emailEvent.save();
+
+      // Update campaign statistics
+      const campaign = await Campaign.findById(emailEvent.campaignId);
+      if (campaign) {
+        // Count unique opens
+        const uniqueOpens = await EmailEvent.countDocuments({
+          campaignId: campaign._id,
+          status: { $in: ['opened', 'clicked'] }
+        });
+        campaign.openedCount = uniqueOpens;
+        await campaign.save();
+
+        // Emit real-time update
+        const campaignRoom = `campaign-${campaign._id.toString()}`;
+        io.to(campaignRoom).emit('campaign-update', {
+          campaignId: campaign._id,
+          stats: calculateStats(campaign)
+        });
+
+        console.log(`👁️ Email open tracked for campaign: ${campaign.subject}`);
+
+        io.emit('email-open', {
+          campaignId: campaign._id,
+          recipientEmail: emailEvent.recipientEmail,
+          trackingId: emailEvent.trackingId,
+          timestamp: now
+        });
+      }
+    }
+
+    // Serve 1x1 transparent GIF pixel
+    const pixel = Buffer.from(
+      'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+      'base64'
+    );
+
+    res.writeHead(200, {
+      'Content-Type': 'image/gif',
+      'Content-Length': pixel.length,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    res.end(pixel);
+
+  } catch (error) {
+    console.error('Tracking pixel error:', error);
+    // Still serve the pixel even on error
+    const pixel = Buffer.from(
+      'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+      'base64'
+    );
+    res.writeHead(200, {
+      'Content-Type': 'image/gif',
+      'Content-Length': pixel.length
+    });
+    res.end(pixel);
+  }
+});
+
+// Link click tracking - Redirects to original URL and records click
+app.get('/track/click/:linkId', async (req, res) => {
+  try {
+    const { linkId } = req.params;
+
+    // Find the tracked link
+    const trackedLink = await TrackedLink.findOne({ linkId });
+
+    if (!trackedLink) {
+      return res.status(404).send('Link not found');
+    }
+
+    const now = new Date();
+    const userAgent = req.headers['user-agent'] || '';
+    const ipAddress = getClientIP(req);
+    const deviceInfo = parseUserAgent(userAgent);
+    const location = getLocationFromIP(ipAddress);
+
+    // Update click count and add click record
+    trackedLink.clickCount += 1;
+    trackedLink.clicks.push({
+      timestamp: now,
+      userAgent,
+      ipAddress,
+      location: `${location.city}, ${location.country}`,
+      device: deviceInfo.device
+    });
+    await trackedLink.save();
+
+    // Update email event
+    const emailEvent = await EmailEvent.findOne({ trackingId: trackedLink.emailTrackingId });
+    if (emailEvent) {
+      emailEvent.clickCount += 1;
+
+      // Update status to clicked
+      if (emailEvent.status !== 'clicked') {
+        emailEvent.status = 'clicked';
+      }
+
+      // Add click event
+      emailEvent.events.push({
+        type: 'clicked',
+        timestamp: now,
+        metadata: {
+          url: trackedLink.originalUrl,
+          userAgent,
+          ipAddress,
+          device: deviceInfo.device,
+          location: `${location.city}, ${location.country}`
+        }
+      });
+
+      // Add to clicked links
+      if (!emailEvent.metadata) {
+        emailEvent.metadata = {};
+      }
+      if (!emailEvent.metadata.clickedLinks) {
+        emailEvent.metadata.clickedLinks = [];
+      }
+      emailEvent.metadata.clickedLinks.push({
+        url: trackedLink.originalUrl,
+        timestamp: now
+      });
+
+      await emailEvent.save();
+
+      // Update campaign statistics
+      const campaign = await Campaign.findById(emailEvent.campaignId);
+      if (campaign) {
+        // Count unique clicks
+        const uniqueClicks = await EmailEvent.countDocuments({
+          campaignId: campaign._id,
+          status: 'clicked'
+        });
+        campaign.clickedCount = uniqueClicks;
+        await campaign.save();
+
+        // Emit real-time update
+        const campaignRoom = `campaign-${campaign._id.toString()}`;
+        io.to(campaignRoom).emit('campaign-update', {
+          campaignId: campaign._id,
+          stats: calculateStats(campaign)
+        });
+
+        console.log(`🖱️ Link click tracked for campaign: ${campaign.subject}`);
+
+        io.emit('email-click', {
+          campaignId: campaign._id,
+          recipientEmail: emailEvent.recipientEmail,
+          trackingId: emailEvent.trackingId,
+          url: trackedLink.originalUrl,
+          timestamp: now
+        });
+      }
+    }
+
+    // Redirect to original URL
+    res.redirect(trackedLink.originalUrl);
+
+  } catch (error) {
+    console.error('Link tracking error:', error);
+    res.status(500).send('Error processing link');
   }
 });
 
@@ -769,8 +1078,8 @@ app.post('/api/test-sheet', async (req, res) => {
   }
 });
 
-// Send bulk emails
-app.post('/api/send-emails', async (req, res) => {
+// Send bulk emails (with attachment support and tracking)
+app.post('/api/send-emails', upload.array('attachments', 10), async (req, res) => {
   try {
     const {
       provider,
@@ -781,14 +1090,25 @@ app.post('/api/send-emails', async (req, res) => {
       template,
       senderName,
       recipients,
-      delayMs = 3000
+      delayMs = 3000,
+      userId
     } = req.body;
 
+    // Parse recipients if it's a string
+    let parsedRecipients = recipients;
+    if (typeof recipients === 'string') {
+      try {
+        parsedRecipients = JSON.parse(recipients);
+      } catch (e) {
+        parsedRecipients = null;
+      }
+    }
+
     // Validate required fields
-    if (!provider || !email || !password || (!sheetId && !recipients) || !subject || !template) {
+    if (!userId || !provider || !email || !password || (!sheetId && !parsedRecipients) || !subject || !template) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: recipients or sheetId is required'
+        message: 'Missing required fields: userId, recipients or sheetId is required'
       });
     }
 
@@ -797,8 +1117,8 @@ app.post('/api/send-emails', async (req, res) => {
 
     // Load contacts
     let contacts = [];
-    if (recipients && Array.isArray(recipients) && recipients.length > 0) {
-      contacts = recipients;
+    if (parsedRecipients && Array.isArray(parsedRecipients) && parsedRecipients.length > 0) {
+      contacts = parsedRecipients;
     } else {
       contacts = await loadContactsFromSheet(sheetId);
     }
@@ -810,38 +1130,137 @@ app.post('/api/send-emails', async (req, res) => {
       });
     }
 
-    // Send emails
+    // Prepare attachments array
+    const attachments = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        attachments.push({
+          filename: file.originalname,
+          path: file.path
+        });
+      }
+    }
+
+    // Create campaign record
+    const campaign = new Campaign({
+      subject,
+      template,
+      senderEmail: email,
+      senderName: senderName || '',
+      totalEmails: contacts.length,
+      status: 'sending',
+      userId: userId,
+      metadata: {
+        provider,
+        attachmentCount: attachments.length,
+        delayMs
+      }
+    });
+    await campaign.save();
+
+    // Get base URL for tracking
+    const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+    // Send emails with tracking
     const results = [];
     let successCount = 0;
+    const startTime = Date.now();
 
     for (let i = 0; i < contacts.length; i++) {
       const contact = contacts[i];
 
       try {
+        // Generate unique tracking ID for this email
+        const trackingId = generateTrackingId();
+
         // Replace placeholders in template
         const personalizedSubject = subject.replace(/\{\{name\}\}/gi, contact.name);
-        const personalizedHtml = template
+        let personalizedHtml = template
           .replace(/\{\{name\}\}/gi, contact.name)
           .replace(/\{\{email\}\}/gi, contact.email);
 
-        const personalizedText = personalizedHtml.replace(/<[^>]*>/g, '');
+        // Inject tracking pixel
+        personalizedHtml = injectTrackingPixel(personalizedHtml, trackingId, baseUrl);
 
-        const info = await transporter.sendMail({
+        // Replace links with tracked versions
+        const { html: trackedHtml, linkMappings } = replaceLinksWithTracking(
+          personalizedHtml,
+          trackingId,
+          baseUrl,
+          generateShortId
+        );
+
+        // Save tracked links to database
+        for (const linkMapping of linkMappings) {
+          const trackedLink = new TrackedLink({
+            linkId: linkMapping.linkId,
+            campaignId: campaign._id,
+            emailTrackingId: trackingId,
+            originalUrl: linkMapping.originalUrl
+          });
+          await trackedLink.save();
+        }
+
+        const personalizedText = trackedHtml.replace(/<[^>]*>/g, '');
+
+        const mailOptions = {
           from: senderName ? `"${senderName}" <${email}>` : email,
           to: `${contact.name} <${contact.email}>`,
           subject: personalizedSubject,
           text: personalizedText,
-          html: personalizedHtml
+          html: trackedHtml
+        };
+
+        // Add attachments if any
+        if (attachments.length > 0) {
+          mailOptions.attachments = attachments;
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+
+        // Create email event record
+        const emailEvent = new EmailEvent({
+          campaignId: campaign._id,
+          trackingId,
+          recipientEmail: contact.email,
+          recipientName: contact.name,
+          status: 'sent',
+          events: [{
+            type: 'sent',
+            timestamp: new Date(),
+            metadata: {
+              messageId: info.messageId
+            }
+          }]
         });
+        await emailEvent.save();
 
         results.push({
           email: contact.email,
           name: contact.name,
           success: true,
-          messageId: info.messageId
+          messageId: info.messageId,
+          trackingId
         });
 
         successCount++;
+
+        // Update campaign progress
+        campaign.sentCount = successCount;
+        await campaign.save();
+
+        // Emit real-time progress via WebSocket
+        const progress = {
+          campaignId: campaign._id,
+          total: contacts.length,
+          sent: successCount,
+          failed: i + 1 - successCount,
+          percentage: ((successCount / contacts.length) * 100).toFixed(2),
+          currentEmail: contact.email,
+          elapsedTime: Date.now() - startTime,
+          estimatedTimeRemaining: ((Date.now() - startTime) / (i + 1)) * (contacts.length - (i + 1))
+        };
+        io.emit('email-progress', progress);
 
         // Delay between emails (except for last one)
         if (i < contacts.length - 1) {
@@ -850,26 +1269,101 @@ app.post('/api/send-emails', async (req, res) => {
 
       } catch (error) {
         console.error(`Failed to send to ${contact.email}:`, error);
+
+        // Create failed email event record
+        const trackingId = generateTrackingId();
+        const emailEvent = new EmailEvent({
+          campaignId: campaign._id,
+          trackingId,
+          recipientEmail: contact.email,
+          recipientName: contact.name,
+          status: 'failed',
+          errorMessage: error.message,
+          events: [{
+            type: 'failed',
+            timestamp: new Date(),
+            metadata: {
+              error: error.message
+            }
+          }]
+        });
+        await emailEvent.save();
+
         results.push({
           email: contact.email,
           name: contact.name,
           success: false,
           error: error.message
         });
+
+        // Update campaign failed count
+        campaign.failedCount++;
+        await campaign.save();
+
+        // Emit progress update
+        const progress = {
+          campaignId: campaign._id,
+          total: contacts.length,
+          sent: successCount,
+          failed: campaign.failedCount,
+          percentage: (((successCount + campaign.failedCount) / contacts.length) * 100).toFixed(2),
+          currentEmail: contact.email,
+          error: error.message
+        };
+        io.emit('email-progress', progress);
+      }
+    }
+
+    // Update campaign as completed
+    campaign.status = 'completed';
+    campaign.completedAt = new Date();
+    campaign.deliveredCount = successCount; // Initially assume all sent emails are delivered
+    await campaign.save();
+
+    // Emit completion event
+    io.emit('email-complete', {
+      campaignId: campaign._id,
+      totalSent: successCount,
+      totalFailed: campaign.failedCount,
+      stats: calculateStats(campaign)
+    });
+
+    // Clean up uploaded files after sending all emails
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (err) {
+          console.error('Error deleting file:', err);
+        }
       }
     }
 
     res.json({
       success: true,
       message: `Sent ${successCount} out of ${contacts.length} emails`,
+      campaignId: campaign._id,
       totalContacts: contacts.length,
       successCount,
       failedCount: contacts.length - successCount,
+      attachmentCount: attachments.length,
       results
     });
 
   } catch (error) {
     console.error('Bulk email error:', error);
+
+    // Clean up uploaded files in case of error
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (err) {
+          console.error('Error deleting file:', err);
+        }
+      }
+    }
+
     res.status(500).json({
       success: false,
       message: error.message
@@ -877,23 +1371,277 @@ app.post('/api/send-emails', async (req, res) => {
   }
 });
 
-// Get email sending status (for progress tracking)
-let emailProgress = {
-  isRunning: false,
-  total: 0,
-  sent: 0,
-  failed: 0
-};
+// ========================
+// ANALYTICS ROUTES
+// ========================
 
-app.get('/api/email-progress', (req, res) => {
-  res.json(emailProgress);
+// Get all campaigns for a user
+app.get('/api/campaigns', async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    const campaigns = await Campaign.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    const campaignsWithStats = campaigns.map(campaign => ({
+      id: campaign._id,
+      subject: campaign.subject,
+      senderEmail: campaign.senderEmail,
+      senderName: campaign.senderName,
+      totalEmails: campaign.totalEmails,
+      sentCount: campaign.sentCount,
+      deliveredCount: campaign.deliveredCount,
+      openedCount: campaign.openedCount,
+      clickedCount: campaign.clickedCount,
+      failedCount: campaign.failedCount,
+      status: campaign.status,
+      openRate: campaign.openRate,
+      clickRate: campaign.clickRate,
+      deliveryRate: campaign.deliveryRate,
+      failureRate: campaign.failureRate,
+      createdAt: campaign.createdAt,
+      completedAt: campaign.completedAt
+    }));
+
+    res.json({
+      success: true,
+      campaigns: campaignsWithStats
+    });
+
+  } catch (error) {
+    console.error('Get campaigns error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 });
 
-// Start server
-app.listen(PORT, () => {
+// Get campaign details with full analytics
+app.get('/api/campaigns/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    const campaign = await Campaign.findOne({ _id: id, userId });
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: 'Campaign not found or unauthorized'
+      });
+    }
+
+    // Get all email events for this campaign
+    const events = await EmailEvent.find({ campaignId: id })
+      .sort({ createdAt: -1 });
+
+    // Get tracked links for this campaign
+    const trackedLinks = await TrackedLink.find({ campaignId: id });
+
+    // Calculate detailed statistics
+    const stats = {
+      total: campaign.totalEmails,
+      sent: campaign.sentCount,
+      delivered: campaign.deliveredCount,
+      opened: campaign.openedCount,
+      clicked: campaign.clickedCount,
+      failed: campaign.failedCount,
+      openRate: campaign.openRate,
+      clickRate: campaign.clickRate,
+      deliveryRate: campaign.deliveryRate,
+      failureRate: campaign.failureRate,
+      uniqueOpens: events.filter(e => e.openCount > 0).length,
+      uniqueClicks: events.filter(e => e.clickCount > 0).length,
+      totalClicks: trackedLinks.reduce((sum, link) => sum + link.clickCount, 0),
+      topLinks: trackedLinks
+        .sort((a, b) => b.clickCount - a.clickCount)
+        .slice(0, 5)
+        .map(link => ({
+          url: link.originalUrl,
+          clicks: link.clickCount
+        }))
+    };
+
+    res.json({
+      success: true,
+      campaign: {
+        id: campaign._id,
+        subject: campaign.subject,
+        template: campaign.template,
+        senderEmail: campaign.senderEmail,
+        senderName: campaign.senderName,
+        status: campaign.status,
+        createdAt: campaign.createdAt,
+        completedAt: campaign.completedAt,
+        metadata: campaign.metadata
+      },
+      stats,
+      eventCount: events.length
+    });
+
+  } catch (error) {
+    console.error('Get campaign details error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Get all events for a campaign
+app.get('/api/campaigns/:id/events', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, limit = 100, offset = 0 } = req.query;
+
+    const query = { campaignId: id };
+    if (status) {
+      query.status = status;
+    }
+
+    const events = await EmailEvent.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(offset));
+
+    const total = await EmailEvent.countDocuments(query);
+
+    const formattedEvents = events.map(event => ({
+      id: event._id,
+      trackingId: event.trackingId,
+      recipientEmail: event.recipientEmail,
+      recipientName: event.recipientName,
+      status: event.status,
+      openCount: event.openCount,
+      clickCount: event.clickCount,
+      firstOpenedAt: event.firstOpenedAt,
+      lastOpenedAt: event.lastOpenedAt,
+      metadata: event.metadata,
+      events: event.events,
+      createdAt: event.createdAt
+    }));
+
+    res.json({
+      success: true,
+      events: formattedEvents,
+      total,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+  } catch (error) {
+    console.error('Get campaign events error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Get aggregated statistics for a campaign
+app.get('/api/campaigns/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: 'Campaign not found'
+      });
+    }
+
+    // Get hourly open/click distribution
+    const events = await EmailEvent.find({ campaignId: id });
+
+    const hourlyStats = {};
+    events.forEach(event => {
+      event.events.forEach(e => {
+        const hour = new Date(e.timestamp).getHours();
+        if (!hourlyStats[hour]) {
+          hourlyStats[hour] = { opens: 0, clicks: 0 };
+        }
+        if (e.type === 'opened') hourlyStats[hour].opens++;
+        if (e.type === 'clicked') hourlyStats[hour].clicks++;
+      });
+    });
+
+    // Device breakdown
+    const deviceStats = {};
+    events.forEach(event => {
+      if (event.metadata && event.metadata.device) {
+        const device = event.metadata.device;
+        deviceStats[device] = (deviceStats[device] || 0) + 1;
+      }
+    });
+
+    // Location breakdown
+    const locationStats = {};
+    events.forEach(event => {
+      if (event.metadata && event.metadata.location) {
+        const location = event.metadata.location;
+        locationStats[location] = (locationStats[location] || 0) + 1;
+      }
+    });
+
+    res.json({
+      success: true,
+      stats: calculateStats(campaign),
+      hourlyStats,
+      deviceStats,
+      locationStats
+    });
+
+  } catch (error) {
+    console.error('Get campaign stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// WebSocket connection handler
+io.on('connection', (socket) => {
+  console.log('📱 Client connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('📱 Client disconnected:', socket.id);
+  });
+
+  socket.on('subscribe-campaign', (campaignId) => {
+    socket.join(`campaign-${campaignId}`);
+    console.log(`📱 Client ${socket.id} subscribed to campaign ${campaignId}`);
+  });
+
+  socket.on('unsubscribe-campaign', (campaignId) => {
+    socket.leave(`campaign-${campaignId}`);
+    console.log(`📱 Client ${socket.id} unsubscribed from campaign ${campaignId}`);
+  });
+});
+
+// Start server with WebSocket support
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📧 Email API ready`);
+  console.log(`🔌 WebSocket ready`);
   console.log(`🌐 http://localhost:${PORT}`);
 });
 
 module.exports = app;
+

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../config/environment.dart';
 
@@ -49,7 +50,7 @@ class ApiService {
     }
   }
   
-  // Send bulk emails
+  // Send bulk emails with attachment support
   Future<Map<String, dynamic>> sendBulkEmails({
     required String provider,
     required String email,
@@ -60,23 +61,44 @@ class ApiService {
     required String template,
     String? senderName,
     int delayMs = 3000,
+    List<File>? attachments,
+    String? userId,
   }) async {
     try {
-      final response = await http.post(
+      var request = http.MultipartRequest(
+        'POST',
         Uri.parse('$baseUrl/api/send-emails'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'provider': provider,
-          'email': email,
-          'password': password,
-          'sheetId': sheetId,
-          'recipients': recipients,
-          'subject': subject,
-          'template': template,
-          'senderName': senderName ?? '',
-          'delayMs': delayMs,
-        }),
       );
+
+      // Add text fields
+      request.fields['provider'] = provider;
+      request.fields['email'] = email;
+      request.fields['password'] = password;
+      if (sheetId != null) request.fields['sheetId'] = sheetId;
+      if (recipients != null) request.fields['recipients'] = jsonEncode(recipients);
+      request.fields['subject'] = subject;
+      request.fields['template'] = template;
+      request.fields['senderName'] = senderName ?? '';
+      request.fields['delayMs'] = delayMs.toString();
+      if (userId != null) request.fields['userId'] = userId;
+
+      // Add attachments if any
+      if (attachments != null && attachments.isNotEmpty) {
+        for (var file in attachments) {
+          var stream = http.ByteStream(file.openRead());
+          var length = await file.length();
+          var multipartFile = http.MultipartFile(
+            'attachments',
+            stream,
+            length,
+            filename: file.path.split('/').last,
+          );
+          request.files.add(multipartFile);
+        }
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
       
       return jsonDecode(response.body);
     } catch (e) {

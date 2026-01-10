@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../services/api_service.dart';
 import '../models/email_config.dart';
 
@@ -10,6 +11,7 @@ class EmailProvider extends ChangeNotifier {
   String _senderName = '';
   List<Map<String, String>> _recipients = [];
   bool _useManualRecipients = false;
+  List<File> _attachments = [];
   
   bool _isLoading = false;
   bool _isSending = false;
@@ -24,6 +26,7 @@ class EmailProvider extends ChangeNotifier {
   String get senderName => _senderName;
   List<Map<String, String>> get recipients => _recipients;
   bool get useManualRecipients => _useManualRecipients;
+  List<File> get attachments => _attachments;
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
   String? get error => _error;
@@ -58,6 +61,26 @@ class EmailProvider extends ChangeNotifier {
   // Set sender name
   void setSenderName(String name) {
     _senderName = name;
+    notifyListeners();
+  }
+  
+  // Add attachment
+  void addAttachment(File file) {
+    _attachments.add(file);
+    notifyListeners();
+  }
+  
+  // Remove attachment
+  void removeAttachment(int index) {
+    if (index >= 0 && index < _attachments.length) {
+      _attachments.removeAt(index);
+      notifyListeners();
+    }
+  }
+  
+  // Clear all attachments
+  void clearAttachments() {
+    _attachments.clear();
     notifyListeners();
   }
 
@@ -140,7 +163,7 @@ class EmailProvider extends ChangeNotifier {
   }
   
   // Send bulk emails
-  Future<bool> sendBulkEmails() async {
+  Future<bool> sendBulkEmails(String userId) async {
     if (_emailConfig == null || _subject.isEmpty || _template.isEmpty || 
         (!_useManualRecipients && _sheetId.isEmpty) || 
         (_useManualRecipients && _recipients.isEmpty)) {
@@ -164,6 +187,8 @@ class EmailProvider extends ChangeNotifier {
         subject: _subject,
         template: _template,
         senderName: _senderName,
+        attachments: _attachments.isNotEmpty ? _attachments : null,
+        userId: userId,
       );
       
       if (result['success'] == true) {
@@ -194,6 +219,7 @@ class EmailProvider extends ChangeNotifier {
     _senderName = '';
     _recipients = [];
     _useManualRecipients = false;
+    _attachments = [];
     _error = null;
     _sendResult = null;
     notifyListeners();

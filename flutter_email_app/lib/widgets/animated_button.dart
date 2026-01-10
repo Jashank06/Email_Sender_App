@@ -86,22 +86,24 @@ class _AnimatedButtonState extends State<AnimatedButton>
                 width: widget.width ?? double.infinity,
                 height: widget.height,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   gradient: widget.isGradient
                       ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: widget.onPressed == null || widget.isLoading
                               ? [
-                                  AppTheme.glowBlue.withOpacity(0.5),
-                                  AppTheme.glowPurple.withOpacity(0.5),
+                                  Colors.white24,
+                                  Colors.white10,
                                 ]
                               : _isPressed
                                   ? [
-                                      AppTheme.glowBlue.withOpacity(0.8),
-                                      AppTheme.glowPurple.withOpacity(0.8),
+                                      const Color(0xFFE0E0E0),
+                                      const Color(0xFFB0B0B0),
                                     ]
                                   : [
-                                      AppTheme.glowBlue,
-                                      AppTheme.glowPurple,
+                                      AppTheme.accentWhite,
+                                      const Color(0xFFE0E0E0),
                                     ],
                         )
                       : null,
@@ -109,32 +111,32 @@ class _AnimatedButtonState extends State<AnimatedButton>
                       ? AppTheme.glassWhite
                       : null,
                   boxShadow: [
-                    BoxShadow(
-                      color: widget.isGradient
-                          ? AppTheme.glowBlue.withOpacity(_isPressed ? 0.3 : 0.5)
-                          : Colors.black.withOpacity(0.2),
-                      blurRadius: _shadowAnimation.value,
-                      offset: Offset(0, _shadowAnimation.value / 2),
-                      spreadRadius: _isHovered ? 2 : 0,
-                    ),
-                    // 3D depth effect
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
+                    if (widget.onPressed != null && !widget.isLoading) ...[
+                      // Main Glow
+                      BoxShadow(
+                        color: Colors.white.withOpacity(_isPressed ? 0.1 : 0.25),
+                        blurRadius: _shadowAnimation.value,
+                        spreadRadius: _isHovered ? 2 : 0,
+                      ),
+                      // 3D Bottom Shadow
+                      if (!_isPressed)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -5,
+                        ),
+                    ],
                   ],
-                  border: !widget.isGradient
-                      ? Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1.5,
-                        )
-                      : null,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(widget.isGradient ? 0.5 : 0.2),
+                    width: 1,
+                  ),
                 ),
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     onTap: widget.onPressed != null && !widget.isLoading
                         ? () {
                             setState(() => _isPressed = false);
@@ -168,7 +170,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
                                         : AppTheme.accentWhite,
                                     size: 20,
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 10),
                                 ],
                                 Text(
                                   widget.text,
@@ -178,7 +180,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
                                     color: widget.isGradient
                                         ? AppTheme.primaryBlack
                                         : AppTheme.accentWhite,
-                                    letterSpacing: 0.5,
+                                    letterSpacing: 1.5,
                                   ),
                                 ),
                               ],

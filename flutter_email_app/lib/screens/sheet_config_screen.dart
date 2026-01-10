@@ -5,6 +5,9 @@ import 'dart:ui';
 import '../providers/email_provider.dart';
 import '../utils/theme.dart';
 import '../widgets/glassmorphic_card.dart';
+import '../widgets/animated_background.dart';
+import '../widgets/animated_button.dart';
+import '../widgets/animated_text_field.dart';
 import 'template_config_screen.dart';
 
 class SheetConfigScreen extends StatefulWidget {
@@ -79,23 +82,10 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlack,
-              AppTheme.secondaryBlack,
-              AppTheme.primaryBlack,
-            ],
-          ),
-        ),
+      backgroundColor: AppTheme.primaryBlack,
+      body: AnimatedBackground(
         child: Stack(
           children: [
-            _buildBackgroundOrb(top: -100, right: -100, color: AppTheme.glowBlue),
-            _buildBackgroundOrb(bottom: -150, left: -150, color: AppTheme.glowPurple),
-            
             SafeArea(
               child: Column(
                 children: [
@@ -103,43 +93,57 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
                   
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      physics: const BouncingScrollPhysics(),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Recipient Setup',
-                              style: Theme.of(context).textTheme.headlineMedium,
+                            const SizedBox(height: 20),
+                            const Text(
+                              'TARGET ACQUISITION',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2.0,
+                              ),
                             ).animate().fadeIn().slideX(begin: -0.2, end: 0),
                             
                             const SizedBox(height: 8),
                             
                             Text(
-                              'Choose how to add your contacts',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              'ESTABLISH RECIPIENT DATA SOURCE PROTOCOL',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.accentWhite.withOpacity(0.4),
+                                letterSpacing: 1.5,
+                              ),
                             ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2, end: 0),
                             
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 40),
                             
                             _buildToggleButtons(),
                             
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 48),
                             
                             if (!_useManual) ...[
                               _buildSheetIdInput(),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 32),
                               _buildInstructionsCard(),
                             ] else ...[
                               _buildManualPasteInput(),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 32),
                               if (_parsedContacts.isNotEmpty) _buildPreviewCard(),
                             ],
                             
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 56),
                             
                             _buildContinueButton(context),
+                            
+                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
@@ -165,26 +169,26 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
 
   Widget _buildToggleButtons() {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: AppTheme.glassWhite,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.black.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Row(
         children: [
           Expanded(
             child: _buildToggleButton(
-              icon: Icons.table_chart_outlined,
-              label: 'Google Sheets',
+              icon: Icons.storage_rounded,
+              label: 'DATABASE',
               isSelected: !_useManual,
               onTap: () => setState(() => _useManual = false),
             ),
           ),
           Expanded(
             child: _buildToggleButton(
-              icon: Icons.paste_rounded,
-              label: 'Paste List',
+              icon: Icons.data_array_rounded,
+              label: 'MANUAL',
               isSelected: _useManual,
               onTap: () => setState(() => _useManual = true),
             ),
@@ -204,17 +208,15 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: 300.ms,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: isSelected 
-              ? LinearGradient(colors: [AppTheme.glowBlue, AppTheme.glowPurple])
-              : null,
+          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? Colors.white : Colors.transparent,
           boxShadow: isSelected ? [
             BoxShadow(
-              color: AppTheme.glowBlue.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: Colors.white.withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 2,
             )
           ] : null,
         ),
@@ -223,42 +225,20 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
           children: [
             Icon(
               icon,
-              size: 20,
-              color: isSelected ? AppTheme.primaryBlack : AppTheme.accentWhite.withOpacity(0.6),
+              size: 18,
+              color: isSelected ? Colors.black : Colors.white24,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? AppTheme.primaryBlack : AppTheme.accentWhite.withOpacity(0.6),
-                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: isSelected ? Colors.black : Colors.white24,
+                fontSize: 11,
+                letterSpacing: 1.5,
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildBackgroundOrb({double? top, double? bottom, double? left, double? right, required Color color}) {
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: Container(
-        width: 300,
-        height: 300,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
         ),
       ),
     );
@@ -269,23 +249,25 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.glassWhite,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-              ),
-              child: const Icon(Icons.arrow_back_rounded, color: AppTheme.accentWhite),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
           const SizedBox(width: 16),
           Text(
-            'Step 2 of 3',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.accentWhite.withOpacity(0.6),
+            'STEP 02 / 03',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.accentWhite.withOpacity(0.3),
+              letterSpacing: 2.0,
             ),
           ),
         ],
@@ -298,20 +280,40 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Google Sheet ID',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          'DATABASE IDENTIFIER',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.accentWhite.withOpacity(0.4),
+            letterSpacing: 1.5,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _sheetIdController,
-          style: const TextStyle(color: AppTheme.accentWhite),
-          decoration: const InputDecoration(
-            hintText: 'Paste your Google Sheet ID here',
-            prefixIcon: Icon(Icons.table_chart_outlined, color: AppTheme.glowBlue),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+          decoration: InputDecoration(
+            hintText: 'GOOGLE_SHEET_UID_HERE',
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.1), letterSpacing: 1.0),
+            prefixIcon: const Icon(Icons.terminal_rounded, color: Colors.white24),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.3),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.8), width: 1.5),
+            ),
           ),
           validator: (value) {
             if (!_useManual && (value == null || value.isEmpty)) {
-              return 'Please enter Google Sheet ID';
+              return 'PROTOCOL ERROR: UID REQUIRED';
             }
             return null;
           },
@@ -328,40 +330,56 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Paste Recipients',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              'RECIPIENT ARRAY',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.accentWhite.withOpacity(0.4),
+                letterSpacing: 1.5,
+              ),
             ),
             Text(
-              '${_parsedContacts.length}/100',
+              '${_parsedContacts.length} / 100 NODES',
               style: TextStyle(
-                color: _parsedContacts.length > 100 ? AppTheme.errorRed : AppTheme.accentWhite.withOpacity(0.6),
-                fontSize: 12,
+                color: _parsedContacts.length > 100 ? Colors.white : AppTheme.accentWhite.withOpacity(0.2),
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.0,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _pasteController,
-          maxLines: 6,
-          style: const TextStyle(color: AppTheme.accentWhite, fontSize: 14),
+          maxLines: 8,
+          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.5),
           onChanged: _parsePastedText,
-          decoration: const InputDecoration(
-            hintText: 'Name   Email\nJohn Doe   john@example.com\nJane Smith   jane@example.com',
-            hintStyle: TextStyle(color: Colors.white24),
-            contentPadding: EdgeInsets.all(16),
+          decoration: InputDecoration(
+            hintText: 'NAME   EMAIL\nAGENT_01   CORE@TERMINAL.IO',
+            hintStyle: TextStyle(color: Colors.white10, letterSpacing: 1.0),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.3),
+            contentPadding: const EdgeInsets.all(20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.8), width: 1.5),
+            ),
           ),
           validator: (value) {
             if (_useManual && _parsedContacts.isEmpty) {
-              return 'Please paste at least one valid recipient';
+              return 'PROTOCOL ERROR: DATA ARRAY EMPTY';
             }
             return null;
           },
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Supported: Excel/Sheets copy-paste, Comma-separated',
-          style: TextStyle(color: AppTheme.accentWhite.withOpacity(0.4), fontSize: 11),
         ),
       ],
     ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0);
@@ -369,119 +387,145 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
 
   Widget _buildPreviewCard() {
     return GlassmorphicCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Parsed Preview',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppTheme.glowBlue,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _parsedContacts.length > 3 ? 3 : _parsedContacts.length,
-            separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 16),
-            itemBuilder: (context, index) {
-              final contact = _parsedContacts[index];
-              return Row(
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: AppTheme.glowBlue.withOpacity(0.2),
-                    child: Text(
-                      contact['name']![0].toUpperCase(),
-                      style: const TextStyle(color: AppTheme.glowBlue, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(contact['name']!, style: const TextStyle(color: AppTheme.accentWhite, fontSize: 13)),
-                        Text(contact['email']!, style: TextStyle(color: AppTheme.accentWhite.withOpacity(0.5), fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          if (_parsedContacts.length > 3) ...[
-            const SizedBox(height: 8),
+      borderRadius: 24,
+      blur: 20,
+      opacity: 0.05,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              '+ ${_parsedContacts.length - 3} more contacts...',
-              style: TextStyle(color: AppTheme.accentWhite.withOpacity(0.4), fontSize: 11, fontStyle: FontStyle.italic),
+              'DATA PREVIEW',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 10,
+                letterSpacing: 2.0,
+              ),
             ),
+            const SizedBox(height: 20),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _parsedContacts.length > 3 ? 3 : _parsedContacts.length,
+              separatorBuilder: (_, __) => Divider(color: Colors.white.withOpacity(0.05), height: 24),
+              itemBuilder: (context, index) {
+                final contact = _parsedContacts[index];
+                return Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      ),
+                      child: Center(
+                        child: Text(
+                          contact['name']![0].toUpperCase(),
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            contact['name']!.toUpperCase(),
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            contact['email']!.toUpperCase(),
+                            style: TextStyle(color: Colors.white30, fontSize: 9, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            if (_parsedContacts.length > 3) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  '+ ${_parsedContacts.length - 3} ADDITIONAL NODES',
+                  style: TextStyle(color: Colors.white10, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0);
   }
   
   Widget _buildInstructionsCard() {
     return GlassmorphicCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.glowBlue.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+      borderRadius: 24,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.info_outline_rounded, color: Colors.white24, size: 18),
                 ),
-                child: const Icon(Icons.info_outline, color: AppTheme.glowBlue, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Setup Instructions',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildInstruction('1', 'Create a Google Sheet with columns: Name, Email'),
-          const SizedBox(height: 12),
-          _buildInstruction('2', 'Share sheet with service account email'),
-          const SizedBox(height: 12),
-          _buildInstruction('3', 'Copy the Sheet ID from URL'),
-        ],
+                const SizedBox(width: 16),
+                const Text(
+                  'PROTOCOL SETUP',
+                  style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 13, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _buildInstruction('01', 'INITIALIZE SHEET WITH NAME/EMAIL HEADERS'),
+            const SizedBox(height: 16),
+            _buildInstruction('02', 'AUTHORIZE SERVICE AGENT NODE PERMISSIONS'),
+            const SizedBox(height: 16),
+            _buildInstruction('03', 'EXTRACT UNIQUE DATABASE UID FROM URL'),
+          ],
+        ),
       ),
     );
   }
   
   Widget _buildInstruction(String number, String text) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(colors: [AppTheme.glowBlue, AppTheme.glowPurple]),
-          ),
-          child: Center(
-            child: Text(
-              number,
-              style: const TextStyle(
-                color: AppTheme.primaryBlack,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
+        Text(
+          number,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.1),
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            letterSpacing: 1.0,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
-          child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.accentWhite.withOpacity(0.4),
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ],
     );
@@ -490,49 +534,11 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
   Widget _buildContinueButton(BuildContext context) {
     return Consumer<EmailProvider>(
       builder: (context, provider, _) {
-        return Container(
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(colors: [AppTheme.glowBlue, AppTheme.glowPurple]),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.glowBlue.withOpacity(0.5),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: provider.isLoading ? null : () => _handleContinue(context),
-              child: Center(
-                child: provider.isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(color: AppTheme.primaryBlack, strokeWidth: 2),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Continue',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryBlack,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward_rounded, color: AppTheme.primaryBlack),
-                        ],
-                      ),
-              ),
-            ),
-          ),
+        return AnimatedButton(
+          onPressed: provider.isLoading ? null : () => _handleContinue(context),
+          text: 'INITIALIZE SYNC',
+          icon: Icons.sync_rounded,
+          isLoading: provider.isLoading,
         ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0);
       },
     );
@@ -540,21 +546,23 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
   
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.7),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Center(
-          child: GlassmorphicCard(
-            width: 200,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(color: AppTheme.glowBlue),
-                const SizedBox(height: 16),
-                Text(_useManual ? 'Processing...' : 'Testing connection...', style: Theme.of(context).textTheme.bodyLarge),
-              ],
+      color: Colors.black87,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            const SizedBox(height: 24),
+            Text(
+              _useManual ? 'IMPORTING DATA...' : 'VERIFYING CONNECTION...',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 3.0,
+                fontSize: 14,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -565,7 +573,7 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
     
     final provider = context.read<EmailProvider>();
     provider.setUseManualRecipients(_useManual);
-
+ 
     if (_useManual) {
       provider.setRecipients(_parsedContacts);
       Navigator.push(
@@ -585,14 +593,21 @@ class _SheetConfigScreenState extends State<SheetConfigScreen> {
         MaterialPageRoute(builder: (context) => const TemplateConfigScreen()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.error ?? 'Failed to connect to Google Sheets'),
-          backgroundColor: AppTheme.errorRed,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      _showSnack(provider.error?.toUpperCase() ?? 'CONNECTION REFUSED');
     }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, fontSize: 12)),
+        backgroundColor: Colors.black.withOpacity(0.9),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+      ),
+    );
   }
 }

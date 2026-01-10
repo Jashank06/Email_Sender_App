@@ -7,6 +7,9 @@ serviceAccount.json
 # Node modules
 node_modules/
 
+# Uploads folder (temporary file uploads)
+uploads/
+
 # Logs
 *.log
 

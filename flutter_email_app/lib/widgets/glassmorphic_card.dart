@@ -86,24 +86,24 @@ class _GlassmorphicCardState extends State<GlassmorphicCard>
                   borderRadius: BorderRadius.circular(widget.borderRadius),
                   border: Border.all(
                     color: _isHovered 
-                        ? AppTheme.glowBlue.withOpacity(0.5)
-                        : Colors.white.withOpacity(0.2),
-                    width: _isHovered ? 2.0 : 1.5,
+                        ? Colors.white.withOpacity(0.4)
+                        : Colors.white.withOpacity(0.15),
+                    width: _isHovered ? 1.5 : 1.0,
                   ),
                   boxShadow: [
+                    // Outer Glow
                     BoxShadow(
-                      color: AppTheme.glowBlue.withOpacity(
-                        widget.enableTapAnimation ? _elevationAnimation.value : 0.1
-                      ),
-                      blurRadius: _isHovered ? 30 : 20,
-                      offset: Offset(0, _isHovered ? 15 : 10),
-                      spreadRadius: _isHovered ? 2 : 0,
+                      color: Colors.white.withOpacity(_isHovered ? 0.05 : 0.02),
+                      blurRadius: _isHovered ? 40 : 20,
+                      offset: Offset(0, _isHovered ? 20 : 10),
+                      spreadRadius: _isHovered ? 5 : 0,
                     ),
-                    // 3D depth effect
+                    // 3D depth effect (Bottom shadow)
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+                      color: Colors.black.withOpacity(0.6),
+                      blurRadius: 20,
+                      offset: const Offset(0, 15),
+                      spreadRadius: -10,
                     ),
                   ],
                 ),
@@ -111,8 +111,8 @@ class _GlassmorphicCardState extends State<GlassmorphicCard>
                   borderRadius: BorderRadius.circular(widget.borderRadius),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(
-                      sigmaX: widget.blur, 
-                      sigmaY: widget.blur,
+                      sigmaX: widget.blur + 5, 
+                      sigmaY: widget.blur + 5,
                     ),
                     child: Container(
                       decoration: BoxDecoration(
@@ -120,9 +120,9 @@ class _GlassmorphicCardState extends State<GlassmorphicCard>
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
+                            Colors.white.withOpacity(widget.opacity + 0.05),
                             Colors.white.withOpacity(widget.opacity),
-                            Colors.white.withOpacity(widget.opacity * 0.5),
-                            Colors.white.withOpacity(widget.opacity * 0.3),
+                            Colors.white.withOpacity(widget.opacity * 0.2),
                           ],
                         ),
                       ),

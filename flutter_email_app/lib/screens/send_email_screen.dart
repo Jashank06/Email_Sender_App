@@ -3,8 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../providers/email_provider.dart';
+import '../providers/tracking_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/theme.dart';
 import '../widgets/glassmorphic_card.dart';
+import '../widgets/progress_card.dart';
+import '../widgets/animated_background.dart';
+import '../widgets/animated_button.dart';
 
 class SendEmailScreen extends StatefulWidget {
   const SendEmailScreen({super.key});
@@ -17,66 +22,39 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlack,
-              AppTheme.secondaryBlack,
-              AppTheme.primaryBlack,
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            _buildBackgroundOrb(top: -100, right: -100, color: AppTheme.glowBlue),
-            _buildBackgroundOrb(bottom: -150, left: -150, color: AppTheme.glowPurple),
-            
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildAppBar(context),
-                  
-                  Expanded(
-                    child: Consumer<EmailProvider>(
-                      builder: (context, provider, _) {
-                        if (provider.isSending) {
+      backgroundColor: AppTheme.primaryBlack,
+      body: AnimatedBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(context),
+              
+              Expanded(
+                child: Consumer<EmailProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.isSending) {
+                      return Consumer<TrackingProvider>(
+                        builder: (context, trackingProvider, _) {
+                          if (trackingProvider.currentProgress != null) {
+                            return Center(
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                                physics: const BouncingScrollPhysics(),
+                                child: ProgressCard(progress: trackingProvider.currentProgress!),
+                              ),
+                            );
+                          }
                           return _buildSendingView();
-                        } else if (provider.sendResult != null) {
-                          return _buildResultView(provider);
-                        } else {
-                          return _buildConfirmView(provider);
-                        }
-                      },
-                    ),
-                  ),
-                ],
+                        },
+                      );
+                    } else if (provider.sendResult != null) {
+                      return _buildResultView(provider);
+                    } else {
+                      return _buildConfirmView(provider);
+                    }
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildBackgroundOrb({double? top, double? bottom, double? left, double? right, required Color color}) {
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: Container(
-        width: 300,
-        height: 300,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.05),
-              Colors.transparent,
             ],
           ),
         ),
@@ -89,22 +67,42 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.glassWhite,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-              ),
-              child: const Icon(Icons.arrow_back_rounded, color: AppTheme.accentWhite),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            'Send Emails',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'CAMPAIGN DISPATCH',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 2.0,
+                  ),
+                ),
+                Text(
+                  'PRE-FLIGHT SECURITY REVIEW',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.accentWhite.withOpacity(0.4),
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -114,58 +112,83 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
   Widget _buildConfirmView(EmailProvider provider) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Ready to Send',
-            style: Theme.of(context).textTheme.headlineMedium,
+          const Text(
+            'READY FOR DEPLOYMENT',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
           ).animate().fadeIn().slideX(begin: -0.2, end: 0),
           
           const SizedBox(height: 8),
           
           Text(
-            'Review your configuration before sending',
-            style: Theme.of(context).textTheme.bodyMedium,
+            'VERIFY STATION CONFIGURATION BEFORE RELEASE',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.accentWhite.withOpacity(0.4),
+              letterSpacing: 1.0,
+            ),
           ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2, end: 0),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 40),
           
           _buildConfigCard(
-            icon: Icons.email_outlined,
-            title: 'Email Provider',
-            value: provider.emailConfig?.provider.toUpperCase() ?? 'N/A',
+            icon: Icons.hub_rounded,
+            title: 'PROTOCOL',
+            value: provider.emailConfig?.provider.toUpperCase() ?? 'NONE',
           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
           
           const SizedBox(height: 16),
           
           _buildConfigCard(
-            icon: Icons.account_circle_outlined,
-            title: 'Email Account',
-            value: provider.emailConfig?.email ?? 'N/A',
+            icon: Icons.alternate_email_rounded,
+            title: 'SOURCE NODE',
+            value: provider.emailConfig?.email ?? 'NONE',
           ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
           
           const SizedBox(height: 16),
           
           _buildConfigCard(
-            icon: provider.useManualRecipients ? Icons.paste_rounded : Icons.table_chart_outlined,
-            title: provider.useManualRecipients ? 'Recipients' : 'Google Sheet',
+            icon: provider.useManualRecipients ? Icons.data_array_rounded : Icons.storage_rounded,
+            title: provider.useManualRecipients ? 'TARGET VECTOR' : 'DATABASE SOURCE',
             value: provider.useManualRecipients 
-                ? '${provider.recipients.length} manual entries'
-                : 'ID: ${provider.sheetId.length > 20 ? provider.sheetId.substring(0, 20) + '...' : provider.sheetId}',
+                ? '${provider.recipients.length} TARGETS IDENTIFIED'
+                : 'SHEET ID: ${provider.sheetId.length > 20 ? provider.sheetId.substring(0, 15) + '...' : provider.sheetId}',
           ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
           
           const SizedBox(height: 16),
           
           _buildConfigCard(
-            icon: Icons.subject_outlined,
-            title: 'Subject',
-            value: provider.subject,
+            icon: Icons.title_rounded,
+            title: 'DISPATCH TITLE',
+            value: provider.subject.toUpperCase(),
           ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
           
-          _buildSendButton(provider),
+          _buildConfigCard(
+            icon: Icons.attachment_rounded,
+            title: 'PAYLOAD',
+            value: provider.attachments.isEmpty 
+                ? 'NO ADDITIONAL PAYLOAD' 
+                : '${provider.attachments.length} OBJECTS ATTACHED',
+          ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
+          
+          const SizedBox(height: 48),
+          
+          AnimatedButton(
+            onPressed: () => _handleSend(provider),
+            text: 'INITIALIZE DISPATCH',
+            icon: Icons.rocket_launch_rounded,
+          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
         ],
       ),
     );
@@ -173,83 +196,54 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
   
   Widget _buildConfigCard({required IconData icon, required String title, required String value}) {
     return GlassmorphicCard(
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.glowBlue.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+      borderRadius: 20,
+      blur: 15,
+      opacity: 0.05,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              child: Icon(icon, color: Colors.white, size: 20),
             ),
-            child: Icon(icon, color: AppTheme.glowBlue),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.accentWhite.withOpacity(0.6),
-                    fontSize: 12,
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.accentWhite.withOpacity(0.4),
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(height: 6),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildSendButton(EmailProvider provider) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(colors: [AppTheme.successGreen, AppTheme.glowBlue]),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.successGreen.withOpacity(0.5),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _handleSend(provider),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.send_rounded, color: Colors.white),
-                const SizedBox(width: 8),
-                Text(
-                  'Send Emails',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
-    ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0);
+    );
   }
   
   Widget _buildSendingView() {
@@ -258,38 +252,56 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [AppTheme.glowBlue, AppTheme.glowPurple]),
+              color: Colors.black,
+              border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.1),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                ),
+              ],
             ),
             child: const Center(
               child: SizedBox(
-                width: 60,
-                height: 60,
+                width: 40,
+                height: 40,
                 child: CircularProgressIndicator(
                   color: Colors.white,
-                  strokeWidth: 4,
+                  strokeWidth: 2,
                 ),
               ),
             ),
           ).animate(onPlay: (controller) => controller.repeat())
-            .shimmer(duration: 1500.ms)
-            .scale(duration: 1000.ms, begin: Offset(0.9, 0.9), end: Offset(1.1, 1.1)),
+            .shimmer(duration: 2000.ms, color: Colors.white10)
+            .scale(duration: 1500.ms, begin: const Offset(0.95, 0.95), end: const Offset(1.05, 1.05), curve: Curves.easeInOut),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 40),
           
-          Text(
-            'Sending Emails...',
-            style: Theme.of(context).textTheme.headlineMedium,
+          const Text(
+            'TRANSMITTING...',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 4.0,
+            ),
           ),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           
           Text(
-            'Please wait while we send your emails',
-            style: Theme.of(context).textTheme.bodyMedium,
+            'STATION IS DISPATCHING DATA PACKETS',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.accentWhite.withOpacity(0.4),
+              letterSpacing: 1.5,
+            ),
           ),
         ],
       ),
@@ -304,69 +316,86 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
     
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
+          const SizedBox(height: 20),
           Container(
-            width: 120,
-            height: 120,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: successCount == total
-                    ? [AppTheme.successGreen, AppTheme.glowBlue]
-                    : [AppTheme.glowBlue, AppTheme.glowPurple],
-              ),
+              color: Colors.black,
+              border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.1),
+                  blurRadius: 40,
+                  spreadRadius: 10,
+                ),
+              ],
             ),
-            child: Icon(
-              successCount == total ? Icons.check_circle_outline : Icons.info_outline,
-              size: 60,
+            child: const Icon(
+              Icons.done_all_rounded,
+              size: 40,
               color: Colors.white,
             ),
-          ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+          ).animate().scale(duration: 800.ms, curve: Curves.elasticOut),
           
           const SizedBox(height: 32),
           
           Text(
-            successCount == total ? 'All Emails Sent!' : 'Emails Sent',
-            style: Theme.of(context).textTheme.headlineMedium,
+            successCount == total ? 'MISSION COMPLETED' : 'TRANSMISSION REPORT',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 1.0,
+            ),
           ).animate().fadeIn(delay: 300.ms),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 48),
           
           Row(
             children: [
               Expanded(
                 child: _buildStatCard(
-                  'Total',
+                  'TOTAL',
                   total.toString(),
-                  Icons.email_outlined,
-                  AppTheme.glowBlue,
+                  Icons.sensors_rounded,
+                  Colors.white.withOpacity(0.4),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatCard(
-                  'Success',
+                  'SUCCESS',
                   successCount.toString(),
-                  Icons.check_circle_outline,
-                  AppTheme.successGreen,
+                  Icons.verified_rounded,
+                  Colors.white,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatCard(
-                  'Failed',
+                  'FAILED',
                   failedCount.toString(),
-                  Icons.error_outline,
-                  AppTheme.errorRed,
+                  Icons.gpp_bad_rounded,
+                  Colors.white.withOpacity(0.2),
                 ),
               ),
             ],
-          ),
+          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 56),
           
-          _buildDoneButton(),
+          AnimatedButton(
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+            text: 'RETURN TO STATION',
+            icon: Icons.home_rounded,
+          ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
         ],
       ),
     );
@@ -374,74 +403,69 @@ class _SendEmailScreenState extends State<SendEmailScreen> {
   
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return GlassmorphicCard(
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: color),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
-          ),
-        ],
+      borderRadius: 24,
+      blur: 20,
+      opacity: 0.04,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 16),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: color,
+                letterSpacing: -1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                color: color.withOpacity(0.4),
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
   
-  Widget _buildDoneButton() {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(colors: [AppTheme.glowBlue, AppTheme.glowPurple]),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.glowBlue.withOpacity(0.5),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          },
-          child: Center(
-            child: Text(
-              'Done',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBlack,
-              ),
-            ),
-          ),
-        ),
-      ),
-    ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0);
-  }
-  
   Future<void> _handleSend(EmailProvider provider) async {
-    final success = await provider.sendBulkEmails();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.email;
+    
+    if (userId == null) {
+      _showSnack('NODE UNAUTHORIZED');
+      return;
+    }
+
+    final success = await provider.sendBulkEmails(userId);
     
     if (!mounted) return;
     
     if (!success && provider.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.error!),
-          backgroundColor: AppTheme.errorRed,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+      _showSnack(provider.error!.toUpperCase());
     }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, fontSize: 12)),
+        backgroundColor: Colors.black.withOpacity(0.9),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+      ),
+    );
   }
 }

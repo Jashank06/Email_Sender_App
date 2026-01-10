@@ -1,249 +1,248 @@
-# ⚡ Quick Start Guide
+# Quick Start Guide - Email Tracking Features
 
-## Get Running in 5 Minutes! 🚀
+## 🚀 Getting Started in 5 Minutes
 
----
+### Step 1: Install MongoDB
 
-## 🎯 What You'll Build
+**Option A: Local MongoDB (Recommended for Development)**
+```bash
+# macOS
+brew tap mongodb/brew
+brew install mongodb-community
+brew services start mongodb-community
 
-A premium Flutter mobile app that sends personalized bulk emails from Google Sheets using Gmail or Outlook.
-
-**Demo Flow:**
+# Verify it's running
+mongosh
+# You should see MongoDB shell. Type 'exit' to quit.
 ```
-Open App → Configure Email → Add Sheet → Create Template → Send! ✅
-```
 
----
+**Option B: MongoDB Atlas (Cloud - Free Tier)**
+1. Go to https://www.mongodb.com/cloud/atlas
+2. Create free account
+3. Create a free cluster
+4. Get connection string
+5. Update `MONGODB_URI` in `.env`
 
-## 📦 What You Need
-
-Before starting, have these ready:
-
-1. ✅ **Node.js** installed (v14+)
-2. ✅ **Flutter** installed (v3.0+)
-3. ✅ **Gmail or Outlook** account
-4. ✅ **App Password** (generated from your email provider)
-5. ✅ **Google Sheet** with contacts
-6. ✅ **Service Account** JSON file
-
----
-
-## 🚀 Step 1: Backend Setup (2 minutes)
-
-### Install & Start Server
+### Step 2: Configure Environment
 
 ```bash
-# Install dependencies
-npm install
+cd /Users/Jay/Projects/Email_Sender_App
 
-# Start backend server
+# Copy example env file
+cp .env.example .env
+
+# Edit .env file
+nano .env
+```
+
+**Minimum required settings:**
+```env
+PORT=3000
+BASE_URL=http://localhost:3000
+MONGODB_URI=mongodb://localhost:27017/email_sender_app
+```
+
+### Step 3: Start the Server
+
+```bash
+# Make sure you're in the project root
+cd /Users/Jay/Projects/Email_Sender_App
+
+# Start the server
 npm run server
 ```
 
-You should see:
+**You should see:**
 ```
+✅ MongoDB connected successfully
 🚀 Server running on port 3000
 📧 Email API ready
+🔌 WebSocket ready
 🌐 http://localhost:3000
 ```
 
-**✅ Backend is running!**
-
----
-
-## 📱 Step 2: Flutter App Setup (2 minutes)
-
-### Install & Run App
+### Step 4: Run the Flutter App
 
 ```bash
-# Navigate to Flutter app
-cd flutter_email_app
+# Open new terminal
+cd /Users/Jay/Projects/Email_Sender_App/flutter_email_app
 
 # Get dependencies
 flutter pub get
 
-# Run on Android/iOS
+# Run the app
 flutter run
 ```
 
-**✅ App is running!**
-
----
-
-## 🔑 Step 3: Get Credentials (1 minute)
-
-### A. Generate Email App Password
-
-**For Gmail:**
-1. Go to: https://myaccount.google.com/apppasswords
-2. Create app password for "Mail"
-3. Copy the 16-character code
-
-**For Outlook:**
-1. Go to: https://account.microsoft.com/security
-2. Generate app password
-3. Copy the password
-
-### B. Get Service Account (If not done)
-
-1. Go to: https://console.cloud.google.com/
-2. Create project → Enable Sheets API
-3. Create Service Account → Download JSON
-4. Save as `serviceAccount.json` in project root
-
----
-
-## 📊 Step 4: Prepare Google Sheet (30 seconds)
-
-### Create Sheet with This Format:
-
-| Name          | Email                |
-|---------------|----------------------|
-| John Doe      | john@example.com     |
-| Jane Smith    | jane@example.com     |
-
-### Share Sheet:
-1. Click "Share" button
-2. Add service account email (from `serviceAccount.json`)
-3. Give "Viewer" access
-
-### Get Sheet ID:
-From URL: `https://docs.google.com/spreadsheets/d/[COPY-THIS-ID]/edit`
-
----
-
-## 🎮 Step 5: Use the App!
-
-### Open the App
-
-1. **Tap "Get Started"**
-
-2. **Configure Email:**
-   - Select Gmail or Outlook
-   - Enter your email
-   - Enter app password
-   - Tap "Continue"
-
-3. **Add Google Sheet:**
-   - Paste Sheet ID
-   - Tap "Continue"
-
-4. **Create Template:**
-   - Enter sender name (optional)
-   - Enter subject: `Hello {{name}}!`
-   - Enter template (or use default)
-   - Tap "Continue"
-
-5. **Send Emails:**
-   - Review settings
-   - Tap "Send Emails"
-   - Watch the magic happen! ✨
-
-**✅ You're sending emails!**
-
----
-
-## 🎨 Example Template
-
-Copy and paste this ready-to-use template:
-
-```html
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-  <h2 style="color: #2563eb;">Hello {{name}}! 👋</h2>
-  <p>I hope this message finds you well.</p>
-  <p>I wanted to reach out personally to share something exciting with you.</p>
-  <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-    <p style="margin: 0;">✨ This is a personalized email sent to <strong>{{email}}</strong></p>
-  </div>
-  <p>Looking forward to connecting!</p>
-  <p>Best regards,<br><strong>Your Name</strong></p>
-</div>
+**For physical device, update Environment config:**
+```dart
+// lib/config/environment.dart
+static const String macIpAddress = 'YOUR_COMPUTER_IP';
+// Example: '192.168.1.100'
 ```
+> [!IMPORTANT]
+> For tracking to work on physical devices, you MUST also update the `BASE_URL` in your `.env` file to use your Computer's IP address instead of `localhost`.
+
+### Step 5: Test the Features
+
+1. **Send a Test Campaign**
+   - Open the app
+   - Go to "Send Email" screen
+   - Add a few test recipients (including yourself)
+   - Include some links in the email template
+   - Click "Send Emails"
+   - Watch the real-time progress! ⚡
+
+2. **Check the Dashboard**
+   - Navigate to "Campaigns" screen
+   - See your campaign listed
+   - Tap to view detailed analytics
+
+3. **Test Email Tracking**
+   - Open the email you received
+   - The app will record the open event
+   - Click a link in the email
+   - Check the dashboard - you'll see the click recorded!
 
 ---
 
-## 📸 What to Expect
+## 🎯 Quick Test Commands
 
-### Home Screen
-- Beautiful glassmorphic design
-- Animated background orbs
-- "Get Started" button with glow effect
-
-### Email Config
-- Provider selection (Gmail/Outlook)
-- Smooth input fields
-- Real-time validation
-
-### Sheet Setup
-- Clean interface
-- Instructions card
-- Contact preview
-
-### Template Editor
-- Large text area for HTML
-- Variable chips
-- Syntax hints
-
-### Sending
-- Animated progress
-- Real-time status
-- Beautiful results screen
-
----
-
-## ⚡ Pro Tips
-
-### First Test
-Always test with yourself first:
-1. Add your email to sheet
-2. Send test email
-3. Verify it looks good
-4. Then send to real contacts
-
-### Common Issues
-
-**"Cannot connect to server"**
+### Test Server Health
 ```bash
-# Make sure server is running
-npm run server
+curl http://localhost:3000/health
 ```
 
-**"Authentication failed"**
-- Use APP PASSWORD, not regular password
-- Enable 2FA first
+### Test Campaigns API
+```bash
+curl http://localhost:3000/api/campaigns
+```
 
-**"Sheet not found"**
-- Share sheet with service account
-- Verify Sheet ID is correct
-
----
-
-## 🎯 You're Ready!
-
-Your premium email sender is ready to use! Here's what you built:
-
-✅ Backend API with Gmail/Outlook support  
-✅ Beautiful Flutter app with glassmorphic UI  
-✅ Google Sheets integration  
-✅ Custom email templates  
-✅ Real-time sending progress  
-
-**Time to send some emails!** 🚀📧
+### Test Tracking Pixel
+```bash
+curl http://localhost:3000/track/open/test-id-123
+```
 
 ---
 
-## 📚 Need More Help?
+## 🐛 Troubleshooting
 
-- **Detailed Setup**: See [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
-- **How to Use**: See [USAGE_GUIDE.md](USAGE_GUIDE.md)
-- **Full Features**: See [README_APP.md](README_APP.md)
+### MongoDB Won't Start
+```bash
+# Check if MongoDB is running
+brew services list | grep mongodb
+
+# Restart MongoDB
+brew services restart mongodb-community
+
+# Check MongoDB logs
+tail -f /usr/local/var/log/mongodb/mongo.log
+```
+
+### Server Won't Start
+```bash
+# Check if port 3000 is in use
+lsof -i :3000
+
+# Kill process using port 3000
+kill -9 <PID>
+
+# Try a different port
+PORT=3001 npm run server
+```
+
+### Flutter App Can't Connect
+```bash
+# Find your computer's IP address
+ifconfig | grep "inet " | grep -v 127.0.0.1
+
+# Update lib/config/environment.dart with this IP (macIpAddress variable)
+# And update BASE_URL in .env (e.g., http://192.168.1.100:3000)
+# Then rebuild the app
+flutter clean
+flutter pub get
+flutter run
+```
+
+### MongoDB Connection Error
+```bash
+# Check MongoDB is running
+mongosh
+
+# If using MongoDB Atlas, verify:
+# 1. Connection string is correct
+# 2. IP whitelist includes your IP
+# 3. Database user has correct permissions
+```
 
 ---
 
-<div align="center">
+## 📊 What to Expect
 
-**🎉 Happy Emailing! 🎉**
+### Real-Time Progress
+When sending emails, you'll see:
+- **Live progress bar** updating after each email
+- **Success counter** incrementing
+- **Failed counter** (if any errors)
+- **Time estimates** updating
+- **Current email** being sent
+- **Sending speed** in emails/minute
 
-Built with ❤️ using Flutter & Node.js
+### Campaigns Dashboard
+You'll see:
+- **All campaigns** listed with beautiful cards
+- **Quick stats** for each campaign
+- **Status badges** (Completed, Sending, Failed)
+- **Open rates** and **click rates**
+- **Tap any campaign** to see detailed analytics
 
-</div>
+### Campaign Details
+For each campaign:
+- **Total sent, opened, clicked, failed**
+- **Percentage rates**
+- **Recent events** timeline
+- **Individual email statuses**
+- **Top clicked links** (coming soon with charts)
+
+### Email Tracking
+When recipients interact with emails:
+- **Opens are tracked** when email is viewed
+- **Clicks are tracked** when links are clicked
+- **Device info** is captured (Desktop/Mobile/Tablet)
+- **Location** is recorded (City, Country)
+- **Statistics update** automatically
+
+---
+
+## 🎨 UI Features
+
+- **Dark theme** with beautiful gradients
+- **Glassmorphism** effects
+- **Smooth animations**
+- **Real-time updates** without refresh
+- **Pull to refresh** on campaigns list
+- **Loading states** with spinners
+- **Error states** with retry buttons
+- **Empty states** with helpful messages
+
+---
+
+## 📝 Next Steps
+
+1. ✅ Start MongoDB
+2. ✅ Configure .env
+3. ✅ Start server
+4. ✅ Run Flutter app
+5. ✅ Send test campaign
+6. ✅ Open email and click links
+7. ✅ Check dashboard for analytics
+
+**Everything is ready to go! 🎉**
+
+For detailed documentation, see:
+- [TRACKING_FEATURES.md](file:///Users/Jay/Projects/Email_Sender_App/TRACKING_FEATURES.md) - Complete feature documentation
+- [walkthrough.md](file:///Users/Jay/.gemini/antigravity/brain/c0322d42-8aa7-41c1-a0a6-d27d66999462/walkthrough.md) - Implementation walkthrough
+
+---
+
+**Need help?** Check the troubleshooting section above or review the detailed documentation.

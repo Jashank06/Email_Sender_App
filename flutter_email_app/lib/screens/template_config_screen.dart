@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import '../providers/email_provider.dart';
 import '../utils/theme.dart';
 import '../widgets/glassmorphic_card.dart';
+import '../widgets/animated_background.dart';
+import '../widgets/animated_button.dart';
 import 'send_email_screen.dart';
 
 class TemplateConfigScreen extends StatefulWidget {
@@ -43,23 +47,10 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primaryBlack,
-              AppTheme.secondaryBlack,
-              AppTheme.primaryBlack,
-            ],
-          ),
-        ),
+      backgroundColor: AppTheme.primaryBlack,
+      body: AnimatedBackground(
         child: Stack(
           children: [
-            _buildBackgroundOrb(top: -100, right: -100, color: AppTheme.glowBlue),
-            _buildBackgroundOrb(bottom: -150, left: -150, color: AppTheme.glowPurple),
-            
             SafeArea(
               child: Column(
                 children: [
@@ -67,43 +58,61 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
                   
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      physics: const BouncingScrollPhysics(),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Email Template',
-                              style: Theme.of(context).textTheme.headlineMedium,
+                            const SizedBox(height: 20),
+                            const Text(
+                              'PAYLOAD ARCHITECT',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2.0,
+                              ),
                             ).animate().fadeIn().slideX(begin: -0.2, end: 0),
                             
                             const SizedBox(height: 8),
                             
                             Text(
-                              'Customize your email content',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              'CUSTOMIZE DISPATCH CONTENT PROTOCOL',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.accentWhite.withOpacity(0.4),
+                                letterSpacing: 1.5,
+                              ),
                             ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2, end: 0),
                             
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 40),
                             
                             _buildSenderNameInput(),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
                             
                             _buildSubjectInput(),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
                             
                             _buildTemplateInput(),
                             
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 32),
                             
-                            _buildVariablesCard(),
+                            _buildAttachmentsSection(),
                             
                             const SizedBox(height: 32),
                             
+                            _buildVariablesCard(),
+                            
+                            const SizedBox(height: 48),
+                            
                             _buildContinueButton(context),
+                            
+                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
@@ -117,52 +126,31 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
       ),
     );
   }
-  
-  Widget _buildBackgroundOrb({double? top, double? bottom, double? left, double? right, required Color color}) {
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: Container(
-        width: 300,
-        height: 300,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.05),
-              Colors.transparent,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
+
   Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.glassWhite,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-              ),
-              child: const Icon(Icons.arrow_back_rounded, color: AppTheme.accentWhite),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
           const SizedBox(width: 16),
           Text(
-            'Step 3 of 3',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.accentWhite.withOpacity(0.6),
+            'STEP 03 / 03',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.accentWhite.withOpacity(0.3),
+              letterSpacing: 2.0,
             ),
           ),
         ],
@@ -175,16 +163,36 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Sender Name (Optional)',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          'SENDER IDENTITY (OPTIONAL)',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.accentWhite.withOpacity(0.4),
+            letterSpacing: 1.5,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _senderNameController,
-          style: const TextStyle(color: AppTheme.accentWhite),
-          decoration: const InputDecoration(
-            hintText: 'Your Name or Company Name',
-            prefixIcon: Icon(Icons.person_outline, color: AppTheme.glowBlue),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+          decoration: InputDecoration(
+            hintText: 'STATION_COMMANDER_NAME',
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.1), letterSpacing: 1.0),
+            prefixIcon: const Icon(Icons.badge_rounded, color: Colors.white24),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.3),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.8), width: 1.5),
+            ),
           ),
         ),
       ],
@@ -196,20 +204,40 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Email Subject',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          'DISPATCH TITLE',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.accentWhite.withOpacity(0.4),
+            letterSpacing: 1.5,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _subjectController,
-          style: const TextStyle(color: AppTheme.accentWhite),
-          decoration: const InputDecoration(
-            hintText: 'Hello {{name}}!',
-            prefixIcon: Icon(Icons.subject_outlined, color: AppTheme.glowBlue),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+          decoration: InputDecoration(
+            hintText: 'HELLO {{NAME}}!',
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.1), letterSpacing: 1.0),
+            prefixIcon: const Icon(Icons.title_rounded, color: Colors.white24),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.3),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.8), width: 1.5),
+            ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter email subject';
+              return 'PROTOCOL ERROR: TITLE REQUIRED';
             }
             return null;
           },
@@ -223,24 +251,41 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Email Template (HTML)',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          'PAYLOAD ARCHITECT (HTML)',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.accentWhite.withOpacity(0.4),
+            letterSpacing: 1.5,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _templateController,
-          maxLines: 10,
-          style: const TextStyle(color: AppTheme.accentWhite, fontSize: 12),
-          decoration: const InputDecoration(
-            hintText: 'Enter your HTML email template',
-            prefixIcon: Padding(
-              padding: EdgeInsets.only(bottom: 150),
-              child: Icon(Icons.code_outlined, color: AppTheme.glowBlue),
+          maxLines: 12,
+          style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'monospace', fontWeight: FontWeight.w400),
+          decoration: InputDecoration(
+            hintText: 'ENTER SOURCE CODE...',
+            hintStyle: TextStyle(color: Colors.white10, letterSpacing: 1.0),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.3),
+            contentPadding: const EdgeInsets.all(20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.8), width: 1.5),
             ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter email template';
+              return 'PROTOCOL ERROR: PAYLOAD EMPTY';
             }
             return null;
           },
@@ -249,33 +294,196 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0);
   }
   
+  Widget _buildAttachmentsSection() {
+    return Consumer<EmailProvider>(
+      builder: (context, provider, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'PAYLOAD ATTACHMENTS',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.accentWhite.withOpacity(0.4),
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                Text(
+                  '${provider.attachments.length} / 10 OBJECTS',
+                  style: TextStyle(
+                    color: AppTheme.accentWhite.withOpacity(0.2),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            GlassmorphicCard(
+              borderRadius: 24,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // Add attachment button
+                    AnimatedButton(
+                      onPressed: () => _pickFiles(provider),
+                      text: 'ATTACH OBJECTS',
+                      icon: Icons.add_circle_outline_rounded,
+                    ),
+                    
+                    // Show attached files
+                    if (provider.attachments.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      ...provider.attachments.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final file = entry.value;
+                        return _buildAttachmentItem(file, index, provider);
+                      }).toList(),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'LIMIT: 25MB PER OBJECT • ALL ARCHIVE TYPES SUPPORTED',
+              style: TextStyle(
+                color: AppTheme.accentWhite.withOpacity(0.15),
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        );
+      },
+    ).animate().fadeIn(delay: 450.ms).slideY(begin: 0.2, end: 0);
+  }
+  
+  Widget _buildAttachmentItem(File file, int index, EmailProvider provider) {
+    final fileName = file.path.split('/').last;
+    final fileSize = _formatFileSize(file.lengthSync());
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.file_present_rounded, color: Colors.white30, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  fileName.toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  fileSize.toUpperCase(),
+                  style: TextStyle(color: Colors.white12, fontSize: 9, fontWeight: FontWeight.w900),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline_rounded, color: Colors.white24, size: 18),
+            onPressed: () => provider.removeAttachment(index),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+  
+  Future<void> _pickFiles(EmailProvider provider) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.any,
+      );
+
+      if (result != null) {
+        for (var file in result.files) {
+          if (file.path != null) {
+            final fileSize = File(file.path!).lengthSync();
+            
+            if (fileSize > 25 * 1024 * 1024) {
+              _showSnack('${file.name} EXCEEDS 25MB LIMIT');
+              continue;
+            }
+            
+            if (provider.attachments.length >= 10) {
+              _showSnack('PROTOCOL LIMIT: 10 OBJECTS');
+              break;
+            }
+            
+            provider.addAttachment(File(file.path!));
+          }
+        }
+      }
+    } catch (e) {
+      _showSnack('PROTOCOL ERROR: FILE ACCESS DENIED');
+    }
+  }
+  
   Widget _buildVariablesCard() {
     return GlassmorphicCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.glowPurple.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+      borderRadius: 24,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.psychology_rounded, color: Colors.white24, size: 18),
                 ),
-                child: const Icon(Icons.code, color: AppTheme.glowPurple, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Available Variables',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildVariableChip('{{name}}', 'Contact name'),
-          const SizedBox(height: 8),
-          _buildVariableChip('{{email}}', 'Contact email'),
-        ],
+                const SizedBox(width: 16),
+                const Text(
+                  'COMPUTED VARIABLES',
+                  style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 11, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildVariableChip('{{NAME}}', 'DYNAMIC RECIPIENT IDENTITY'),
+            const SizedBox(height: 8),
+            _buildVariableChip('{{EMAIL}}', 'DYNAMIC RECIPIENT NODE'),
+          ],
+        ),
       ),
     );
   }
@@ -284,32 +492,32 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppTheme.glowBlue.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(4),
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               variable,
               style: const TextStyle(
-                color: AppTheme.glowBlue,
+                color: Colors.white,
                 fontFamily: 'monospace',
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Text(
             description,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
+            style: TextStyle(color: AppTheme.accentWhite.withOpacity(0.2), fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.5),
           ),
         ],
       ),
@@ -317,44 +525,25 @@ class _TemplateConfigScreenState extends State<TemplateConfigScreen> {
   }
   
   Widget _buildContinueButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(colors: [AppTheme.glowBlue, AppTheme.glowPurple]),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.glowBlue.withOpacity(0.5),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _handleContinue(context),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Continue',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBlack,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.arrow_forward_rounded, color: AppTheme.primaryBlack),
-              ],
-            ),
-          ),
+    return AnimatedButton(
+      onPressed: () => _handleContinue(context),
+      text: 'FINALIZE DEPLOYMENT',
+      icon: Icons.rocket_launch_rounded,
+    ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0);
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, fontSize: 12)),
+        backgroundColor: Colors.black.withOpacity(0.9),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
         ),
       ),
-    ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0);
+    );
   }
   
   void _handleContinue(BuildContext context) {
